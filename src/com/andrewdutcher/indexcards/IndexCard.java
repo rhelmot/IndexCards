@@ -6,7 +6,10 @@ import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.NinePatchDrawable;
+import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
+import android.view.View;
 
 public class IndexCard {
 	
@@ -41,16 +44,21 @@ public class IndexCard {
 	public int rotx;
 	public int roty;
 	
-	public long timetouch;
 	public boolean selected = false;
 	public int deltaz;
+	
+	public long timetouch;
+	public boolean singletouch;
+	public boolean holdtouch;
 	
 	public boolean animating;
 	public AnimatedNums animdata;	//{x, y, width, height, rotation}
 	
 	public String debugdata;
 	
-	public IndexCard(String text, Rect bounds, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg)
+	public View parent;
+	
+	public IndexCard(View context, String text, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg)
 	{
 		/*shadow = new Paint();
 		shadow.setColor(0xFF000000);
@@ -59,9 +67,11 @@ public class IndexCard {
 		selshadow.setColor(0xFF56AAFF);*/
 		shadow = shadowimg;
 		selshadow = selshadowimg;
+		parent = context;
 		
 		cardText = text;
 		cardDim = bounds;
+		rotation = rotdeg;
 		fillStyle = new Paint();
 		fillStyle.setARGB(255, 220, 220, 220);
 		fillStyle.setAntiAlias(true);
@@ -73,8 +83,17 @@ public class IndexCard {
 		rotation = 0;
 	}
 	
-	public boolean draw(Canvas c)
+	public void draw(Canvas c)
 	{
+		/*if (singletouch)
+		{
+			long dtime = System.currentTimeMillis()-timetouch;
+			if (dtime > 250)
+			{
+				//TODO: run single touch code
+				Log.d("Andrew", "Single Tapped");
+			}
+		}*/
 		if (animating)
 		{
 			double[] data;
@@ -90,6 +109,7 @@ public class IndexCard {
 			cardDim.right = cardDim.left + (int) data[2];
 			cardDim.bottom = cardDim.top + (int) data[3];
 			rotation = (float) data[4];
+			parent.invalidate();
 			//Log.d("andrew", new Integer((int) data[2]).toString());
 		}
 		if (touches[1]==-1 && !animating)
@@ -111,7 +131,6 @@ public class IndexCard {
 		c.drawRect(cardDim, fillStyle);
 		updateTextStyle();
 		c.drawText(cardText, (cardDim.left+cardDim.right)/2, (cardDim.top+cardDim.bottom)/2, textStyle);
-		return animating;
 		/*Rect r = new Rect();
 		r.left = rotx;
 		r.top = roty;
@@ -135,12 +154,22 @@ public class IndexCard {
 			oCardDim = new Rect(cardDim);
 			timetouch = System.currentTimeMillis();
 			selected = true;
+			if (!singletouch)
+			{
+				holdtouch = true;
+				new Handler().postDelayed(new Runnable() {
+					public void run() {
+						if (holdtouch)
+							Log.d("andrew","Longtap!");
+					}
+				}, 1100);
+			}
 		}
 		else if (touches[1] == -1)
 		{
 			touches[1] = id;
 			int index0 = e.findPointerIndex(touches[0]);
-			touchdistref = getdist(e.getX(index0), e.getY(index0), e.getX(index), e.getY(index)); 
+			touchdistref = getdist(e.getX(index0), e.getY(index0), e.getX(index), e.getY(index));
 			touchangref = getangle(e.getX(index0), e.getY(index0), e.getX(index), e.getY(index));
 			touchxref = (e.getX(index) + e.getX(index0)) / 2;
 			touchyref = (e.getY(index) + e.getY(index0)) / 2;
@@ -160,6 +189,7 @@ public class IndexCard {
 	}
 	public void processTouches(MotionEvent e)
 	{
+		holdtouch = false;
 		int action = e.getAction() & MotionEvent.ACTION_MASK;
 		if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_POINTER_UP)
 		{
@@ -170,7 +200,6 @@ public class IndexCard {
 			if (touches[2] == id)
 			{
 				touches[2] = -1;
-				//TODO: handle z changes
 			}
 			else if (touches[1] == id)
 			{
@@ -188,6 +217,33 @@ public class IndexCard {
 				{
 					touches[0] = -1;
 					selected = false;
+					
+					if (singletouch)
+					{
+						singletouch = false;
+						Log.d("andrew","Double Touch!");
+					}
+					else
+					{
+						long ctime = System.currentTimeMillis();
+						long dtime = ctime - timetouch;
+						if (dtime < 150)
+						{
+							timetouch = ctime;
+							singletouch = true;
+							new Handler().postDelayed(new Runnable() {
+	
+								public void run() {
+									if (singletouch)
+									{
+										singletouch = false;
+										Log.d("andrew","Single Touch!");
+									}
+								}
+								
+							}, 250);
+						}
+					}
 				}
 				else
 				{
@@ -204,6 +260,7 @@ public class IndexCard {
 		}
 		else if (e.getAction() == MotionEvent.ACTION_MOVE)
 		{
+			timetouch = 0;
 			if (touches[0] == -1)
 			{}
 			else if (touches[1] == -1)

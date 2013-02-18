@@ -24,14 +24,13 @@ public class CardDrawer extends View {
 		r.top = this.getHeight()/2-3;
 		r.right = r.left+10;
 		r.bottom = r.top+6;
-		cards.add(new IndexCard("Hello, world!", r, shadowimg, selshadowimg));
+		cards.add(new IndexCard(this, "Hello, world!", r, 0, shadowimg, selshadowimg));
 		int index = cards.size()-1;
 		zorder.add(index);
 		IndexCard tc = cards.get(index);
 		tc.oCardDim = new Rect(r);
 		tc.rotx = this.getWidth()/2;
 		tc.roty = this.getHeight()/2;
-		tc.rotation = 0;
 		tc.touchxref = (float) tc.rotx;
 		tc.touchyref = (float) tc.roty;
 		tc.setRotPoint();
@@ -54,14 +53,11 @@ public class CardDrawer extends View {
 		zorder = new ArrayList<Integer>();
 	}
 	protected void onDraw(Canvas c) {
-		boolean invalidated = false;
 		for (int i = 0; i < zorder.size(); i++) {
 			c.save();
-			invalidated |= cards.get(zorder.get(i)).draw(c);
+			cards.get(zorder.get(i)).draw(c);
 			c.restore();
 		}
-		if (invalidated)
-			invalidate();
 	}
 	public boolean onTouchEvent(MotionEvent e) {
 		Integer action = e.getAction() & MotionEvent.ACTION_MASK;
