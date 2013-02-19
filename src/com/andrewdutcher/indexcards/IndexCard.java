@@ -25,7 +25,7 @@ public class IndexCard {
 	
 	public Rect oCardDim;
 	public float oRotation;
-	public float scalefactor;
+	public float scalefactor = 1;
 	
 	public int[] touches = {-1, -1, -1};
 	public float touchangref;
@@ -34,15 +34,11 @@ public class IndexCard {
 	public float touchyref;
 	public float touchzref;
 	
-	public int activemove;
-	public int activesize;
-	public int activerot;
-	
-	public float offsetx;
+	public float offsetx;			//distance from card corner to rot point, cardspace
 	public float offsety;
 	
-	public int rotx;
-	public int roty;
+	public float oOffsetx;
+	public float oOffsety;
 	
 	public boolean selected = false;
 	public int deltaz;
@@ -103,19 +99,28 @@ public class IndexCard {
 			{
 				data = animdata.endvalues;
 				animating = false;
-				unsetRotPoint();
 			}
 			cardDim.offsetTo((int) data[0], (int) data[1]);
 			cardDim.right = cardDim.left + (int) data[2];
 			cardDim.bottom = cardDim.top + (int) data[3];
-			rotation = (float) data[4];
+			offsetx = (float) data[4];
+			offsety = (float) data[5];
+			rotation = (float) data[6];
 			parent.invalidate();
+			if (!animdata.isActive())
+			{
+				oCardDim.set(cardDim);
+				unsetRotPoint();
+			}
 			//Log.d("andrew", new Integer((int) data[2]).toString());
 		}
-		if (touches[1]==-1 && !animating)
+		/*if (touches[1]==-1 && !animating)
 			c.rotate(rotation, cardDim.left, cardDim.top);
 		else
-			c.rotate(rotation, rotx, roty);
+			c.rotate(rotation, rotx, roty);*/
+		//drawDebugPoint(cardDim.left, cardDim.top, c);
+		c.rotate(rotation, cardDim.left+offsetx, cardDim.top+offsety);
+		//drawDebugPoint(cardDim.left, cardDim.top, c);
 		cardDim.inset(-2, -3);
 		if (selected)
 		{
@@ -130,13 +135,12 @@ public class IndexCard {
 		cardDim.inset(2, 3);
 		c.drawRect(cardDim, fillStyle);
 		updateTextStyle();
-		c.drawText(cardText, (cardDim.left+cardDim.right)/2, (cardDim.top+cardDim.bottom)/2, textStyle);
-		/*Rect r = new Rect();
-		r.left = rotx;
-		r.top = roty;
-		r.right = r.left + 10;
-		r.bottom = r.top + 10;
-		c.drawRect(r, textStyle);*/
+		c.drawText(cardText, cardDim.centerX(), cardDim.centerY(), textStyle);
+		//drawDebugPoint(cardDim.left + (int) offsetx, cardDim.top + (int) offsety, c);
+	}
+	
+	public void drawDebugPoint(int x, int y, Canvas c) {
+		c.drawRect(new Rect(x,y,x+10,y+10), textStyle);
 	}
 	
 	public void updateTextStyle()
@@ -175,10 +179,10 @@ public class IndexCard {
 			touchyref = (e.getY(index) + e.getY(index0)) / 2;
 			oCardDim = new Rect(cardDim);
 			oRotation = rotation;
-			rotx = (int) touchxref;
-			roty = (int) touchyref;
 			
-			setRotPoint();
+			setRotPoint(touchxref, touchyref);
+			oOffsetx = offsetx;
+			oOffsety = offsety;
 		}
 		else if (touches[2] == -1)
 		{
@@ -237,6 +241,7 @@ public class IndexCard {
 									if (singletouch)
 									{
 										singletouch = false;
+										singletap();
 										Log.d("andrew","Single Touch!");
 									}
 								}
@@ -284,11 +289,14 @@ public class IndexCard {
 					scalefactor = 600/(float)oCardDim.height();
 				else if (scalefactor*oCardDim.height() < 200)
 					scalefactor = 200/(float)oCardDim.height();												//MATH
-				rotx = (int) ((e.getX(index1)+e.getX(index2))/2);
-				roty = (int) ((e.getY(index1)+e.getY(index2))/2);
+				float rotx = ((e.getX(index1)+e.getX(index2))/2);
+				float roty = ((e.getY(index1)+e.getY(index2))/2);
+				cardDim.set(oCardDim);
+				offsetx = oOffsetx*scalefactor;
+				offsety = oOffsety*scalefactor;
 				cardDim.right += oCardDim.width()*(scalefactor-1);
 				cardDim.bottom += oCardDim.height()*(scalefactor-1);
-				cardDim.offsetTo((int) (rotx-(offsetx*scalefactor)),(int) (roty-(offsety*scalefactor)));
+				cardDim.offsetTo((int) (rotx-offsetx),(int) (roty-offsety));
 				
 				
 			}
@@ -306,27 +314,36 @@ public class IndexCard {
 		}
 	}
 	
-	public void setRotPoint() {
-		double x1 = (touchxref-cardDim.left)/Math.cos(Math.toRadians(rotation));
-		double h1 = (touchxref-cardDim.left)*Math.tan(Math.toRadians(rotation));
-		double h2 = (touchyref-cardDim.top) - h1;
+	public void setRotPoint(float x, float y) {
+		double x1 = (x-cardDim.left)/Math.cos(Math.toRadians(rotation));
+		double h1 = (x-cardDim.left)*Math.tan(Math.toRadians(rotation));
+		double h2 = (y-cardDim.top) - h1;
 		double x2 = h2*Math.sin(Math.toRadians(rotation));
 		offsetx = (float) (x1+x2);
 		offsety = (float) (h2*Math.cos(Math.toRadians(rotation)));
-		cardDim.offsetTo(rotx-(int)offsetx,roty-(int)offsety);
+		cardDim.offsetTo((int)(x-offsetx),(int)(y-offsety));
 	}
 	
 	public void unsetRotPoint() {
-		double y2 = offsety*scalefactor/Math.cos(Math.toRadians(rotation));
-		double x2 = offsety*scalefactor*Math.tan(Math.toRadians(rotation));
-		double x1 = offsetx*scalefactor - x2;
+		double y2 = offsety/Math.cos(Math.toRadians(rotation));
+		double x2 = offsety*Math.tan(Math.toRadians(rotation));
+		double x1 = offsetx - x2;
 		double x = x1*Math.cos(Math.toRadians(rotation));
 		double y1 = x1*Math.sin(Math.toRadians(rotation));
 		double y = y1+y2;
-		cardDim.set(oCardDim);
-		cardDim.offsetTo(rotx-(int)x, roty-(int)y);
-		cardDim.right = cardDim.left + (int) (cardDim.width()*scalefactor);
-		cardDim.bottom = cardDim.top + (int) (cardDim.height()*scalefactor);
+		cardDim.offsetTo((int)(cardDim.left+offsetx-x), (int)(cardDim.top+offsety-y));
+		cardDim.right = cardDim.left + (int) (oCardDim.width()*scalefactor);
+		cardDim.bottom = cardDim.top + (int) (oCardDim.height()*scalefactor);
+		offsetx = 0;
+		offsety = 0;
+		scalefactor = 1;
+	}
+	
+	public void setRotOffset(float x, float y) {
+		unsetRotPoint();
+		cardDim.offset((int) ((x * Math.cos(Math.toRadians(rotation))) - (y * Math.sin(Math.toRadians(rotation))) - x), (int) ((x * Math.sin(Math.toRadians(rotation))) + (y * Math.cos(Math.toRadians(rotation))) - y));
+		offsetx = x;
+		offsety = y;
 	}
 	
 	public void cancelTouches() {
@@ -337,6 +354,56 @@ public class IndexCard {
 		touches[0] = -1;
 		touches[1] = -1;
 		touches[2] = -1;
+	}
+	
+	public void singletap() {
+		setRotOffset(cardDim.width()/2, cardDim.height()/2);
+		double[] startvals = {cardDim.left, cardDim.top, cardDim.width(), cardDim.height(), offsetx, offsety, rotation};
+		double[] endvals = {parent.getWidth()/2-300, 20, 600, 360, 300, 180, 0};
+		animdata = new AnimatedNums(startvals, endvals, 500);
+		animating = true;
+		parent.invalidate();
+	}
+	
+	public void doubletap() {
+		
+	}
+	
+	public void longtap() {
+		
+	}
+	
+	public boolean doesPointTouch(int x, int y) {
+		int cx = cardDim.left;
+		int cy = cardDim.top;
+		if (offsetx != 0 || offsety != 0)
+		{
+			double y2 = offsety/Math.cos(Math.toRadians(rotation));
+			double x2 = offsety*Math.tan(Math.toRadians(rotation));
+			double x1 = offsetx - x2;
+			cx = (int) (x1*Math.cos(Math.toRadians(rotation)));
+			double y1 = x1*Math.sin(Math.toRadians(rotation));
+			cy = (int) (y1+y2);
+		}
+		double w1 = cardDim.width()*Math.cos(Math.toRadians(rotation));
+		double h1 = cardDim.width()*Math.sin(Math.toRadians(rotation));		//some of these will be negative
+		double w2 = -cardDim.height()*Math.sin(Math.toRadians(rotation));
+		double h2 = cardDim.height()*Math.cos(Math.toRadians(rotation));
+		Vector v1 = new Vector(x - cx, y - cy, 0);
+		Vector v2 = new Vector(x - (cx + w1), y - (cy + h1), 0);
+		Vector v3 = new Vector(x - (cx + w1 + w2), y - (cy + h1 + h2), 0);
+		Vector v4 = new Vector(x - (cx + w2), y - (cy + h2), 0);
+		double[] vectorsums = {v1.add(v2).get2DAngle(),v2.add(v3).get2DAngle(),v3.add(v4).get2DAngle(),v4.add(v1).get2DAngle()};
+		for (int j = 0; j < 4; j++)
+		{
+			vectorsums[j] = (vectorsums[j] - rotation) % 360;
+			if (vectorsums[j] < 0)
+				vectorsums[j] += 360; //angles range from -90 to 270 for some odd reason -- let's fix that
+		}
+		return (vectorsums[0] < 180 &&
+			vectorsums[1] < 270 && vectorsums[1] > 90 &&
+			vectorsums[2] > 180 &&	
+			(vectorsums[3] > 270 || vectorsums[3] < 90));
 	}
 	
 	private float getangle(float x1, float y1, float x2, float y2) {
