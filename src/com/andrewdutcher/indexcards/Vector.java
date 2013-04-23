@@ -30,6 +30,10 @@ public class Vector {
 		this(false, x, y, z);
 	}
 	
+	public Vector(double r, double theta) {
+		this(false,r*Math.cos(Math.toRadians(theta)),r*Math.sin(Math.toRadians(theta)),0);
+	}
+	
 	// Accessor Methods
 	public double getX() {
 		return x;

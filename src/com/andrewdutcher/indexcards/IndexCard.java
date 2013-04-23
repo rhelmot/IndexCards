@@ -378,12 +378,16 @@ public class IndexCard {
 		int cy = cardDim.top;
 		if (offsetx != 0 || offsety != 0)
 		{
-			double y2 = offsety/Math.cos(Math.toRadians(rotation));
+			/*double y2 = offsety/Math.cos(Math.toRadians(rotation));
 			double x2 = offsety*Math.tan(Math.toRadians(rotation));
 			double x1 = offsetx - x2;
 			cx = (int) (x1*Math.cos(Math.toRadians(rotation)));
 			double y1 = x1*Math.sin(Math.toRadians(rotation));
-			cy = (int) (y1+y2);
+			cy = (int) (y1+y2);*/
+			Vector ux = new Vector(-offsetx, rotation);
+			Vector uy = new Vector(-offsety, rotation + 90);
+			cx += ux.getX() + uy.getX() + offsetx;
+			cy += ux.getY() + uy.getY() + offsety;
 		}
 		double w1 = cardDim.width()*Math.cos(Math.toRadians(rotation));
 		double h1 = cardDim.width()*Math.sin(Math.toRadians(rotation));		//some of these will be negative
