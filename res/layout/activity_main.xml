@@ -1,14 +1,25 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:id="@+id/mainlayout" >
+    
+    <com.andrewdutcher.indexcards.CardDrawer
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/drawer" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <EditText
+        android:id="@+id/editText1"
+        android:layout_width="450dip"
+        android:layout_height="210dip"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:text="@string/hello_world"
-        tools:context=".MainActivity" />
+        android:layout_marginTop="73dip"
+        android:ems="45"
+        android:gravity="center"
+        android:inputType="text|textMultiLine"
+        android:visibility="invisible" 
+        android:freezesText="true" 
+        android:hint="@string/emptycardhint" />
 
 </RelativeLayout>

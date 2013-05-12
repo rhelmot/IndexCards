@@ -5,16 +5,21 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 
 public class MainActivity extends Activity {
 	
-	private CardDrawer mview;
+	public CardDrawer mview;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mview = new CardDrawer(this);
-        setContentView(mview);
+        setContentView(R.layout.activity_main);
+        mview = (CardDrawer) findViewById(R.id.drawer);
+        mview.input = new CardInput(this, (EditText) findViewById(R.id.editText1), getResources().getDisplayMetrics().density);
+        /*if (savedInstanceState != null && savedInstanceState.containsKey("mview")) {
+        	mview.restore(savedInstanceState.getBundle("mview"));
+        }*/	//do it through onRestoreInstanceState instead
     }
 
     @Override
@@ -36,5 +41,22 @@ public class MainActivity extends Activity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+    
+    public void onSaveInstanceState(Bundle outState) {
+    	super.onSaveInstanceState(outState);
+    	outState.putBundle("mview", mview.serialize());
+    }
+    
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+    	if (savedInstanceState != null && savedInstanceState.containsKey("mview")) {
+        	mview.saved = savedInstanceState.getBundle("mview");
+        }
+    }
+    
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+    	super.onWindowFocusChanged(hasFocus);
+    	mview.restore();
     }
 }
