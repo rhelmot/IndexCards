@@ -40,7 +40,7 @@ public class CardDrawer extends View {
 		r.right = r.left+10;
 		r.bottom = r.top+6;
 		String[] nmn = {};
-		IndexCard tc = new IndexCard(this, nmn, r, 0, shadowimg, selshadowimg);
+		IndexCard tc = new IndexCard(this, "", nmn, r, 0, shadowimg, selshadowimg);
 		cards.add(tc);
 		int index = cards.size()-1;
 		zorder.add(index);

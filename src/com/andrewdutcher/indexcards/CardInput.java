@@ -40,40 +40,42 @@ public class CardInput {
 	}
 	
 	public String[] getLines() {
+		int width = (int) context.mview.editspace[2] - 80;
 		String[] initial = textBox.getText().toString().split("\n");
 		ArrayList<String> out = new ArrayList<String>();
 		Paint tp = textBox.getPaint();
 		for (int i = 0; i < initial.length; i++) {
-			while (tp.measureText(initial[i]) > textBox.getWidth()) {
+			while (tp.measureText(initial[i]) > width) {
 				//Log.d("andrew", "Line '"+ initial[i] +"' too long");
 				int safe = 0;
 				int space;
 				for (space = 0;
-					tp.measureText(initial[i], 0, space) < textBox.getWidth();
+					space >= 0 && tp.measureText(initial[i], 0, space) < width;
 					space = initial[i].indexOf(" ", space+1)) {
 						safe = space;
 						//Log.d("andrew", "Space found: " + ((Integer) safe).toString());
 				}
-				if (safe == 0)
-					safe = space;
-				out.add(initial[i].substring(0, safe + 1));
+				if (safe == 0 || (safe + 1 == initial[i].length()))
+					break;
+				out.add(initial[i].substring(0, safe));
 				initial[i] = initial[i].substring(safe + 1);
 			}
-			out.add(initial[i] + "\n");
+			out.add(initial[i]);
 		}
+		//out.set(out.size()-1,out.get(out.size()-1).substring(0,out.get(out.size()-1).length()-1));
 		return out.toArray(new String[out.size()]);
 	}	
 	public void set(String text) {
 		textBox.setText(text);
 	}
 	
-	public void setLines(String[] text) {
+	/*public void setLines(String[] text) {
 		String out = "";
 		for (int i = 0; i < text.length; i++) {
 			out += text[i];
 		}
 		set(out);
-	}
+	}*/
 
 	public void setTextSize(float f) {
 		textBox.setTextSize(f/density);

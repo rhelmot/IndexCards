@@ -13,7 +13,8 @@ import android.view.MotionEvent;
 
 public class IndexCard {
 	
-	public String[] cardText;
+	public String cardText;
+	public String[] cardLines;
 	public Rect cardDim;
 	public float rotation;
 	public Paint fillStyle;
@@ -54,25 +55,25 @@ public class IndexCard {
 	
 	public CardDrawer parent;
 	
-	public IndexCard(CardDrawer context, String[] text, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg)
+	public IndexCard(CardDrawer context, String text, String[] lines, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg)
 	{
-		init(context, text, bounds, rotdeg, shadowimg, selshadowimg);
+		init(context, text, lines, bounds, rotdeg, shadowimg, selshadowimg);
 	}
 	
 	public IndexCard(CardDrawer context, Bundle serialdata, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) {
 		int x = serialdata.getInt("x");
 		int y = serialdata.getInt("y");
-		init(context, serialdata.getStringArray("text"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), shadowimg, selshadowimg);
+		init(context, serialdata.getString("text"), serialdata.getStringArray("lines"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), shadowimg, selshadowimg);
 		if (serialdata.getBoolean("editing")) {
 			cardDim = new Rect((int)parent.editspace[0],(int)parent.editspace[1],(int)(parent.editspace[0]+parent.editspace[2]),(int)(parent.editspace[1]+parent.editspace[3]));
 			editing = true;
 			drawcontrols = true;
-			parent.input.setLines(cardText);		//should be done automatically...!
+			parent.input.set(cardText);		//should be done automatically...!
 			parent.input.show();
 		}
 	}
 	
-	public void init(CardDrawer context, String[] text, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) 
+	public void init(CardDrawer context, String text, String[] lines, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) 
 	{
 		shadow = shadowimg;
 		selshadow = selshadowimg;
@@ -82,6 +83,7 @@ public class IndexCard {
 		animating = false;
 		
 		cardText = text;
+		cardLines = lines;
 		cardDim = bounds;
 		oCardDim = new Rect(bounds);
 		rotation = rotdeg;
@@ -108,7 +110,8 @@ public class IndexCard {
 				parent.state = 2;
 			}
 		}
-		out.putStringArray("text", cardText);
+		out.putString("text", cardText);
+		out.putStringArray("lines", cardLines);
 		out.putInt("x", cardDim.left);
 		out.putInt("y", cardDim.top);
 		out.putInt("w", cardDim.width());
@@ -131,7 +134,7 @@ public class IndexCard {
 				animating = false;
 				if (editing && parent.state == 1) {
 					parent.state = 2;
-					parent.input.setLines(cardText);
+					parent.input.set(cardText);
 					parent.input.show();
 					drawcontrols = true;
 				}
@@ -168,9 +171,9 @@ public class IndexCard {
 		updateTextStyle();
 		if (!drawcontrols) {
 			float linespace = textStyle.getFontMetrics().descent - textStyle.getFontMetrics().ascent;
-			float starty = cardDim.centerY() - (linespace*(cardText.length-1)/2) + (linespace/2);
-			for (int i = 0; i < cardText.length; i++) {
-				c.drawText(cardText[i], cardDim.centerX(), starty, textStyle);
+			float starty = cardDim.centerY() - (linespace*(cardLines.length-1)/2) + (linespace/2);
+			for (int i = 0; i < cardLines.length; i++) {
+				c.drawText(cardLines[i], cardDim.centerX(), starty, textStyle);
 				//drawDebugPoint(cardDim.centerX(), (int) starty, c);
 				starty += linespace;
 			}
@@ -196,7 +199,8 @@ public class IndexCard {
 			parent.state = 0;
 			drawcontrols = false;
 			parent.input.hide();
-			cardText = parent.input.getLines();
+			cardText = parent.input.get();
+			cardLines = parent.input.getLines();
 			return true;
 		}
 		int id = e.getPointerId(index);
