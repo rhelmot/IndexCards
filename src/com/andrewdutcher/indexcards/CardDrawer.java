@@ -22,7 +22,7 @@ public class CardDrawer extends View {
 	private NinePatchDrawable shadowimg;
 	private NinePatchDrawable selshadowimg;
 	
-	public double[] editspace;
+	public double[] editspace;  //data describing the location for a card being edited
 	
 	public CardInput input;
 	
@@ -39,7 +39,8 @@ public class CardDrawer extends View {
 		r.top = this.getHeight()/2-3;
 		r.right = r.left+10;
 		r.bottom = r.top+6;
-		IndexCard tc = new IndexCard(this, "", r, 0, shadowimg, selshadowimg);
+		String[] nmn = {};
+		IndexCard tc = new IndexCard(this, nmn, r, 0, shadowimg, selshadowimg);
 		cards.add(tc);
 		int index = cards.size()-1;
 		zorder.add(index);

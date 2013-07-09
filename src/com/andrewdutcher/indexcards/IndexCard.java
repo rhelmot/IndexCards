@@ -13,7 +13,7 @@ import android.view.MotionEvent;
 
 public class IndexCard {
 	
-	public String cardText;
+	public String[] cardText;
 	public Rect cardDim;
 	public float rotation;
 	public Paint fillStyle;
@@ -54,7 +54,7 @@ public class IndexCard {
 	
 	public CardDrawer parent;
 	
-	public IndexCard(CardDrawer context, String text, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg)
+	public IndexCard(CardDrawer context, String[] text, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg)
 	{
 		init(context, text, bounds, rotdeg, shadowimg, selshadowimg);
 	}
@@ -62,17 +62,17 @@ public class IndexCard {
 	public IndexCard(CardDrawer context, Bundle serialdata, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) {
 		int x = serialdata.getInt("x");
 		int y = serialdata.getInt("y");
-		init(context, serialdata.getString("text"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), shadowimg, selshadowimg);
+		init(context, serialdata.getStringArray("text"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), shadowimg, selshadowimg);
 		if (serialdata.getBoolean("editing")) {
 			cardDim = new Rect((int)parent.editspace[0],(int)parent.editspace[1],(int)(parent.editspace[0]+parent.editspace[2]),(int)(parent.editspace[1]+parent.editspace[3]));
 			editing = true;
 			drawcontrols = true;
-			parent.input.set(cardText);		//should be done automatically...!
+			parent.input.setLines(cardText);		//should be done automatically...!
 			parent.input.show();
 		}
 	}
 	
-	public void init(CardDrawer context, String text, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) 
+	public void init(CardDrawer context, String[] text, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) 
 	{
 		shadow = shadowimg;
 		selshadow = selshadowimg;
@@ -108,7 +108,7 @@ public class IndexCard {
 				parent.state = 2;
 			}
 		}
-		out.putString("text", cardText);
+		out.putStringArray("text", cardText);
 		out.putInt("x", cardDim.left);
 		out.putInt("y", cardDim.top);
 		out.putInt("w", cardDim.width());
@@ -131,7 +131,7 @@ public class IndexCard {
 				animating = false;
 				if (editing && parent.state == 1) {
 					parent.state = 2;
-					parent.input.set(cardText);
+					parent.input.setLines(cardText);
 					parent.input.show();
 					drawcontrols = true;
 				}
@@ -167,11 +167,10 @@ public class IndexCard {
 		c.drawRect(cardDim, fillStyle);
 		updateTextStyle();
 		if (!drawcontrols) {
-			String[] lines = cardText.split("\n");
 			float linespace = textStyle.getFontMetrics().descent - textStyle.getFontMetrics().ascent;
-			float starty = cardDim.centerY() - (linespace*(lines.length-1)/2) + (linespace/2);
-			for (int i = 0; i < lines.length; i++) {
-				c.drawText(lines[i], cardDim.centerX(), starty, textStyle);
+			float starty = cardDim.centerY() - (linespace*(cardText.length-1)/2) + (linespace/2);
+			for (int i = 0; i < cardText.length; i++) {
+				c.drawText(cardText[i], cardDim.centerX(), starty, textStyle);
 				//drawDebugPoint(cardDim.centerX(), (int) starty, c);
 				starty += linespace;
 			}
@@ -197,7 +196,7 @@ public class IndexCard {
 			parent.state = 0;
 			drawcontrols = false;
 			parent.input.hide();
-			cardText = parent.input.get();
+			cardText = parent.input.getLines();
 			return true;
 		}
 		int id = e.getPointerId(index);
