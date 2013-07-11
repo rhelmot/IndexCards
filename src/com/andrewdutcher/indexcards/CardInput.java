@@ -10,9 +10,10 @@ import android.widget.RelativeLayout;
 import android.graphics.*;
 
 public class CardInput {
-	public MainActivity context;
-	public EditText textBox;
-	public float density;
+	private MainActivity context;
+	private EditText textBox;
+	private float density;
+	private IndexCard client;
 	
 	public CardInput(MainActivity baseContext, EditText inputTextBox, float screenDensity) {
 		context = baseContext;
@@ -20,19 +21,37 @@ public class CardInput {
 		density = screenDensity;
 	}
 	
-	public void show() {
+	public void show(IndexCard target) {
+		client = target;
 		RelativeLayout.LayoutParams rllp = new RelativeLayout.LayoutParams((int) context.mview.editspace[2]-50, (int) context.mview.editspace[3]-90); 
 		rllp.topMargin = 81;
 		rllp.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		textBox.setLayoutParams(rllp);
 		textBox.setVisibility(EditText.VISIBLE);
 		((InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(textBox, InputMethodManager.SHOW_FORCED);
+		revert();
+		target.editing = true;
+		target.drawcontrols = true;
+		target.animating = false;
+		context.mview.state = 2;
+		context.mview.mActionMode = context.mview.startActionMode(context.mview.singleSelectedAction);
+		context.mview.currentCard = target;
+		setTextSize(target.textStyle.getTextSize());
 	}
 	
 	public void hide() {
 		textBox.setVisibility(EditText.INVISIBLE);
 		InputMethodManager imm = (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(textBox.getWindowToken(), 0);
+		client.cardLines = getLines();
+		client.cardText = get();
+		client.drawcontrols = false;
+		client.editing = false;
+		context.mview.state = 0;
+		if (client.savedSpot.length != 0) {
+			client.animating = true;
+			client.animdata = new AnimatedNums(context.mview.editspace, client.savedSpot, 400);
+		}
 	}
 	
 	public String get() {
@@ -76,8 +95,12 @@ public class CardInput {
 		}
 		set(out);
 	}*/
+	
+	public void revert() {
+		set(client.cardText);
+	}
 
-	public void setTextSize(float f) {
+	private void setTextSize(float f) {
 		textBox.setTextSize(f/density);
 	}
 }

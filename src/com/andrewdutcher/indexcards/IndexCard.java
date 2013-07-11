@@ -6,10 +6,12 @@ import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.NinePatchDrawable;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.ActionMode;
 
 public class IndexCard {
 	
@@ -19,8 +21,6 @@ public class IndexCard {
 	public float rotation;
 	public Paint fillStyle;
 	public Paint textStyle;
-	public NinePatchDrawable shadow;
-	public NinePatchDrawable selshadow;
 	
 	public Rect oCardDim;
 	public float oRotation;
@@ -50,33 +50,29 @@ public class IndexCard {
 	public boolean drawcontrols;
 	public boolean animating;
 	public AnimatedNums animdata;	//{x, y, width, height, rotation}
+	public double[] savedSpot = {};		//[x, y, width, height, offsetx, offsety, rotation]
 	
 	public String debugdata;
 	
 	public CardDrawer parent;
 	
-	public IndexCard(CardDrawer context, String text, String[] lines, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg)
-	{
-		init(context, text, lines, bounds, rotdeg, shadowimg, selshadowimg);
+	public IndexCard(CardDrawer context, String text, String[] lines, Rect bounds, float rotdeg) {
+		double[] temp = {};
+		init(context, text, lines, bounds, rotdeg, temp);
 	}
 	
-	public IndexCard(CardDrawer context, Bundle serialdata, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) {
+	public IndexCard(CardDrawer context, Bundle serialdata) {
 		int x = serialdata.getInt("x");
 		int y = serialdata.getInt("y");
-		init(context, serialdata.getString("text"), serialdata.getStringArray("lines"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), shadowimg, selshadowimg);
+		init(context, serialdata.getString("text"), serialdata.getStringArray("lines"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), serialdata.getDoubleArray("savedspot"));
 		if (serialdata.getBoolean("editing")) {
 			cardDim = new Rect((int)parent.editspace[0],(int)parent.editspace[1],(int)(parent.editspace[0]+parent.editspace[2]),(int)(parent.editspace[1]+parent.editspace[3]));
-			editing = true;
-			drawcontrols = true;
-			parent.input.set(cardText);		//should be done automatically...!
-			parent.input.show();
+			parent.input.show(this);
 		}
 	}
 	
-	public void init(CardDrawer context, String text, String[] lines, Rect bounds, float rotdeg, NinePatchDrawable shadowimg, NinePatchDrawable selshadowimg) 
+	public void init(CardDrawer context, String text, String[] lines, Rect bounds, float rotdeg, double[] spot) 
 	{
-		shadow = shadowimg;
-		selshadow = selshadowimg;
 		parent = context;
 		
 		editing = false;
@@ -87,6 +83,7 @@ public class IndexCard {
 		cardDim = bounds;
 		oCardDim = new Rect(bounds);
 		rotation = rotdeg;
+		//savedSpot = spot;
 		
 		fillStyle = new Paint();
 		fillStyle.setARGB(255, 220, 220, 220);
@@ -108,6 +105,8 @@ public class IndexCard {
 			if (editing) {
 				drawcontrols = true;
 				parent.state = 2;
+				parent.mActionMode = parent.startActionMode(parent.singleSelectedAction);
+				parent.currentCard = this;
 			}
 		}
 		out.putString("text", cardText);
@@ -118,25 +117,23 @@ public class IndexCard {
 		out.putInt("h", cardDim.height());
 		out.putFloat("rot", rotation);
 		out.putBoolean("editing", editing);
+		if (!editing)
+			saveSpot();
+		out.putDoubleArray("savedSpot", savedSpot);
 		return out;
 	}
 	
 	public void draw(Canvas c)
 	{
-		if (animating)
-		{
+		if (animating) {
 			double[] data;
 			if (animdata.isActive())
 				data = animdata.getValues();
-			else
-			{
+			else {
 				data = animdata.endvalues;
 				animating = false;
 				if (editing && parent.state == 1) {
-					parent.state = 2;
-					parent.input.set(cardText);
-					parent.input.show();
-					drawcontrols = true;
+					parent.input.show(this);
 				}
 			}
 			cardDim.offsetTo((int) data[0], (int) data[1]);
@@ -146,8 +143,7 @@ public class IndexCard {
 			offsety = (float) data[5];
 			rotation = (float) data[6];
 			parent.invalidate();
-			if (!animdata.isActive())
-			{
+			if (!animdata.isActive()) {
 				oCardDim.set(cardDim);
 				unsetRotPoint();
 			}
@@ -156,15 +152,12 @@ public class IndexCard {
 		c.rotate(rotation, cardDim.left+offsetx, cardDim.top+offsety);
 		//drawDebugPoint(cardDim.left, cardDim.top, c);
 		cardDim.inset(-2, -3);
-		if (selected)
-		{
-			selshadow.setBounds(cardDim);
-			selshadow.draw(c);
-		}
-		else
-		{
-			shadow.setBounds(cardDim);
-			shadow.draw(c);
+		if (selected) {
+			parent.selshadowimg.setBounds(cardDim);
+			parent.selshadowimg.draw(c);
+		} else {
+			parent.shadowimg.setBounds(cardDim);
+			parent.shadowimg.draw(c);
 		}
 		cardDim.inset(2, 3);
 		c.drawRect(cardDim, fillStyle);
@@ -177,7 +170,9 @@ public class IndexCard {
 				//drawDebugPoint(cardDim.centerX(), (int) starty, c);
 				starty += linespace;
 			}
-			
+		} else {
+			//new Bitm
+			//c.drawBitmap(R.drawable.ok, 100, 100, new Paint());
 		}
 		//drawDebugPoint(cardDim.left + (int) offsetx, cardDim.top + (int) offsety, c);
 	}
@@ -186,21 +181,14 @@ public class IndexCard {
 		c.drawRect(new Rect(x,y,x+10,y+10), textStyle);
 	}
 	
-	public void updateTextStyle()
-	{
+	public void updateTextStyle() {
 		textStyle.setTextSize(cardDim.height()/8);
-		parent.input.setTextSize((float)(cardDim.height()/8));
 	}
 	
 	public boolean addPoint(MotionEvent e, int index) {
 		//Log.d("andrew","down");
-		if (editing) {
-			editing = false;
-			parent.state = 0;
-			drawcontrols = false;
-			parent.input.hide();
-			cardText = parent.input.get();
-			cardLines = parent.input.getLines();
+		if (editing) {					//this should never happen
+			parent.input.hide();	//but just in case
 			return true;
 		}
 		int id = e.getPointerId(index);
@@ -297,7 +285,7 @@ public class IndexCard {
 									if (singletouch)
 									{
 										singletouch = false;
-										singletap();
+										singletap(true);
 										Log.d("andrew","Single Touch!");
 									}
 								}
@@ -418,15 +406,14 @@ public class IndexCard {
 		touches[2] = -1;
 	}
 	
-	public void singletap() {
+	public void singletap(boolean legit) {
 		setRotOffset(cardDim.width()/2, cardDim.height()/2);
-		double[] startvals = {cardDim.left, cardDim.top, cardDim.width(), cardDim.height(), offsetx, offsety, rotation};
-		animdata = new AnimatedNums(startvals, parent.editspace, 500);
+		if (legit)
+			saveSpot();
+		animdata = new AnimatedNums(savedSpot, parent.editspace, 500);
 		animating = true;
 		editing = true;
 		parent.state = 1;
-		deltaz = 1000;
-		parent.processDeltaZs(this);
 		parent.invalidate();
 	}
 	
@@ -437,6 +424,11 @@ public class IndexCard {
 	public void longtap() {
 		
 	}
+	
+	public void saveSpot() {
+		double[] temp = {(double) cardDim.left, (double) cardDim.top, (double) cardDim.width(), (double) cardDim.height(), (double) offsetx, (double) offsety, (double) rotation};
+		savedSpot = temp;
+		}
 	
 	public boolean doesPointTouch(int x, int y) {
 		int cx = cardDim.left;

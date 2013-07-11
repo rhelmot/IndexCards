@@ -13,14 +13,20 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ActionMode;
+import android.view.*;
 
 public class CardDrawer extends View {
 	
 	public ArrayList<IndexCard> cards;
+	public IndexCard currentCard;
 	public ArrayList<Integer> zorder;
 	
-	private NinePatchDrawable shadowimg;
-	private NinePatchDrawable selshadowimg;
+	public NinePatchDrawable shadowimg;
+	public NinePatchDrawable selshadowimg;
+	
+	public ActionMode mActionMode;
+	public MainActivity parent;
 	
 	public double[] editspace;  //data describing the location for a card being edited
 	
@@ -40,13 +46,13 @@ public class CardDrawer extends View {
 		r.right = r.left+10;
 		r.bottom = r.top+6;
 		String[] nmn = {};
-		IndexCard tc = new IndexCard(this, "", nmn, r, 0, shadowimg, selshadowimg);
+		IndexCard tc = new IndexCard(this, "", nmn, r, 0);
 		cards.add(tc);
 		int index = cards.size()-1;
 		zorder.add(index);
 		tc.setRotOffset(5,3);
 		tc.rotation = 180;
-		tc.singletap();
+		tc.singletap(false);
 		invalidate();
 	}
 	
@@ -105,18 +111,27 @@ public class CardDrawer extends View {
 				idata.putInt("y", hei*idata.getInt("y")/saved.getInt("height"));
 			}
 			zorder.add(i,idata.getInt("zorder"));
-			cards.add(new IndexCard(this, idata, shadowimg, selshadowimg));
+			cards.add(new IndexCard(this, idata));
 			
 		}
 	}
 	protected void onDraw(Canvas c) {
 		for (int i = 0; i < zorder.size(); i++) {
+			if (currentCard != null && !cards.get(zorder.get(i)).editing) {
+				c.save();
+				cards.get(zorder.get(i)).draw(c);
+				c.restore();
+			}
+		}
+		if (currentCard != null) {
 			c.save();
-			cards.get(zorder.get(i)).draw(c);
+			currentCard.draw(c);
 			c.restore();
 		}
 	}
 	public boolean onTouchEvent(MotionEvent e) {
+		if (state != 0)
+			return false;
 		Integer action = e.getAction() & MotionEvent.ACTION_MASK;
 		if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN)
 		{
@@ -129,7 +144,7 @@ public class CardDrawer extends View {
 			float ty = e.getY(index);
 			for (int i = zorder.size() - 1; i >= 0; i--) {
 				IndexCard tc = cards.get(zorder.get(i));
-				if (tc.animating || (state != 0 && !tc.editing))
+				if (tc.animating)
 					continue;
 				if (tc.doesPointTouch((int) tx, (int) ty))
 				{
@@ -178,4 +193,45 @@ public class CardDrawer extends View {
 			cards.get(i).deltaz = 0;
 		}
 	}
+	
+	
+	public ActionMode.Callback singleSelectedAction = new ActionMode.Callback() {
+		@Override
+		public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+			// Inflate a menu resource providing context menu items
+			MenuInflater inflater = mode.getMenuInflater();
+			inflater.inflate(R.menu.edit_single, menu);
+			Log.d("andrew", "a");
+			return true;
+		}
+		
+		@Override
+		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			return false; // Return false if nothing is done
+		}
+
+		@Override
+		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+			Log.d("andrew", "d");
+			switch (item.getItemId()) {
+				case R.id.menu_delete_single:
+					//delete functionality
+					mode.finish();
+					return true;
+				case R.id.menu_cancel_edit:
+					input.revert();
+					mode.finish();
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		@Override
+		public void onDestroyActionMode(ActionMode mode) {
+			mActionMode = null;
+			input.hide();
+			currentCard = null;
+		}
+	};
 }
