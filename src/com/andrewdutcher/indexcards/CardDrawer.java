@@ -39,7 +39,8 @@ public class CardDrawer extends View {
 	public Bundle saved = null;
 	
 	public void addnew() {
-		
+		if (currentCard != null)
+			return;
 		Rect r = new Rect();
 		r.left = this.getWidth()/2-5;
 		r.top = this.getHeight()/2-3;
@@ -52,7 +53,9 @@ public class CardDrawer extends View {
 		zorder.add(index);
 		tc.setRotOffset(5,3);
 		tc.rotation = 180;
-		tc.singletap(false);
+		tc.singletap();
+		double[] temp = {};
+		tc.savedSpot = temp;
 		invalidate();
 	}
 	
@@ -117,7 +120,7 @@ public class CardDrawer extends View {
 	}
 	protected void onDraw(Canvas c) {
 		for (int i = 0; i < zorder.size(); i++) {
-			if (currentCard != null && !cards.get(zorder.get(i)).editing) {
+			if (currentCard != null || !cards.get(zorder.get(i)).editing) {
 				c.save();
 				cards.get(zorder.get(i)).draw(c);
 				c.restore();
@@ -232,6 +235,7 @@ public class CardDrawer extends View {
 			mActionMode = null;
 			input.hide();
 			currentCard = null;
+			invalidate();
 		}
 	};
 }

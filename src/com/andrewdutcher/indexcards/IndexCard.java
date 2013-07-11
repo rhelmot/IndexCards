@@ -83,7 +83,7 @@ public class IndexCard {
 		cardDim = bounds;
 		oCardDim = new Rect(bounds);
 		rotation = rotdeg;
-		//savedSpot = spot;
+		savedSpot = spot;
 		
 		fillStyle = new Paint();
 		fillStyle.setARGB(255, 220, 220, 220);
@@ -285,7 +285,7 @@ public class IndexCard {
 									if (singletouch)
 									{
 										singletouch = false;
-										singletap(true);
+										singletap();
 										Log.d("andrew","Single Touch!");
 									}
 								}
@@ -406,14 +406,14 @@ public class IndexCard {
 		touches[2] = -1;
 	}
 	
-	public void singletap(boolean legit) {
+	public void singletap() {
 		setRotOffset(cardDim.width()/2, cardDim.height()/2);
-		if (legit)
-			saveSpot();
+		saveSpot();
 		animdata = new AnimatedNums(savedSpot, parent.editspace, 500);
 		animating = true;
 		editing = true;
 		parent.state = 1;
+		parent.currentCard = this;
 		parent.invalidate();
 	}
 	
@@ -428,7 +428,7 @@ public class IndexCard {
 	public void saveSpot() {
 		double[] temp = {(double) cardDim.left, (double) cardDim.top, (double) cardDim.width(), (double) cardDim.height(), (double) offsetx, (double) offsety, (double) rotation};
 		savedSpot = temp;
-		}
+	}
 	
 	public boolean doesPointTouch(int x, int y) {
 		int cx = cardDim.left;
