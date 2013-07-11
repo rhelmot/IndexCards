@@ -49,6 +49,7 @@ public class IndexCard {
 	public boolean editing;
 	public boolean drawcontrols;
 	public boolean animating;
+	public boolean deleting;
 	public AnimatedNums animdata;	//{x, y, width, height, rotation}
 	public double[] savedSpot = {};		//[x, y, width, height, offsetx, offsety, rotation]
 	
@@ -235,6 +236,8 @@ public class IndexCard {
 	}
 	public void processTouches(MotionEvent e)
 	{
+		if (animating)
+			return;
 		holdtouch = false;
 		int action = e.getAction() & MotionEvent.ACTION_MASK;
 		if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_POINTER_UP)
@@ -428,6 +431,15 @@ public class IndexCard {
 	public void saveSpot() {
 		double[] temp = {(double) cardDim.left, (double) cardDim.top, (double) cardDim.width(), (double) cardDim.height(), (double) offsetx, (double) offsety, (double) rotation};
 		savedSpot = temp;
+	}
+	
+	public void delete() {
+		animating = true;
+		deleting = true;
+		setRotOffset(cardDim.width()/2, cardDim.height()/2);
+		saveSpot();
+		double[] dest = {cardDim.left + offsetx, cardDim.top + offsety, 0, 0, 0, 0, 360};
+		animdata = new AnimatedNums(savedSpot, dest, 500);
 	}
 	
 	public boolean doesPointTouch(int x, int y) {

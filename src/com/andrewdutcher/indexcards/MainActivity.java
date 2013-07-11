@@ -38,6 +38,9 @@ public class MainActivity extends Activity {
             case R.id.menu_addnew:
             	mview.addnew();
             	return true;
+			case R.id.menu_purge:
+				mview.purge();
+				return true;
             default:
                 return super.onOptionsItemSelected(item);
         }

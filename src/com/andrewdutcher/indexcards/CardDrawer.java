@@ -87,7 +87,7 @@ public class CardDrawer extends View {
 			IndexCard card = cards.get(i);
 			Bundle mcard = card.serialize();
 			mcard.putInt("zorder", zorder.indexOf(i));
-			carddata[i] = (Parcelable) mcard;
+			carddata[i] = mcard;
 		}
 		out.putParcelableArray("cards", carddata);
 		out.putInt("width", getWidth());
@@ -109,21 +109,38 @@ public class CardDrawer extends View {
 		Parcelable[] carddata = saved.getParcelableArray("cards");
 		for (int i = 0; i < carddata.length; i++) {
 			Bundle idata = (Bundle) carddata[i];
-			if (resize) {
-				idata.putInt("x", wid*idata.getInt("x")/saved.getInt("width"));
-				idata.putInt("y", hei*idata.getInt("y")/saved.getInt("height"));
+			if (resize) {							//utter BS math
+				int x = idata.getInt("x");
+				int y = idata.getInt("y");
+				int w = idata.getInt("w");
+				int h = idata.getInt("h");
+				float rot = idata.getFloat("rot");
+				double cdx = (Math.cos(Math.toRadians(rot))*w - Math.sin(Math.toRadians(rot))*h)/2;  //ty alex
+				double cdy = (Math.cos(Math.toRadians(rot))*h + Math.sin(Math.toRadians(rot))*w)/2;
+				double cx = x + cdx;
+				double cy = y + cdy;
+				cx = wid*cx/saved.getInt("width");
+				cy = hei*cy/saved.getInt("height");
+				idata.putInt("x", (int) (cx - cdx));
+				idata.putInt("y", (int) (cy - cdy));
 			}
-			zorder.add(i,idata.getInt("zorder"));
+			if (idata.getInt("zorder") >= 0)
+				zorder.add(i,idata.getInt("zorder"));
 			cards.add(new IndexCard(this, idata));
 			
 		}
 	}
 	protected void onDraw(Canvas c) {
 		for (int i = 0; i < zorder.size(); i++) {
-			if (currentCard != null || !cards.get(zorder.get(i)).editing) {
+			IndexCard a = cards.get(zorder.get(i));
+			if (currentCard != a) {
 				c.save();
-				cards.get(zorder.get(i)).draw(c);
+				a.draw(c);
 				c.restore();
+				if (a.deleting && !a.animating) {
+					deleteCard(a);
+					i--;
+				}
 			}
 		}
 		if (currentCard != null) {
@@ -197,6 +214,28 @@ public class CardDrawer extends View {
 		}
 	}
 	
+	public void deleteCard(int target) {
+		int z = zorder.indexOf(target);
+		if (z >= 0)
+			zorder.remove(z);
+	}
+	
+	public void deleteCard(IndexCard target) {
+		int id = cards.indexOf(target);
+		if (id >= 0)
+			deleteCard(id);
+	}
+	
+	public void purge() {
+		ArrayList<Integer> temp = new ArrayList<Integer>();
+		ArrayList<IndexCard> tempCards = new ArrayList<IndexCard>();
+		for (int i = 0; i < zorder.size(); i++) {
+			temp.add(i);
+			tempCards.add(cards.get(zorder.get(i)));
+		}
+		zorder = temp;
+		cards = tempCards;
+	}
 	
 	public ActionMode.Callback singleSelectedAction = new ActionMode.Callback() {
 		@Override
@@ -218,7 +257,8 @@ public class CardDrawer extends View {
 			Log.d("andrew", "d");
 			switch (item.getItemId()) {
 				case R.id.menu_delete_single:
-					//delete functionality
+					input.hide();
+					currentCard.delete();
 					mode.finish();
 					return true;
 				case R.id.menu_cancel_edit:

@@ -40,6 +40,8 @@ public class CardInput {
 	}
 	
 	public void hide() {
+		if (client == null)
+			return;
 		textBox.setVisibility(EditText.INVISIBLE);
 		InputMethodManager imm = (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(textBox.getWindowToken(), 0);
@@ -52,6 +54,7 @@ public class CardInput {
 			client.animating = true;
 			client.animdata = new AnimatedNums(context.mview.editspace, client.savedSpot, 400);
 		}
+		client = null;
 	}
 	
 	public String get() {

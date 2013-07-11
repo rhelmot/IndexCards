@@ -3,8 +3,9 @@
     <string name="app_name">Index Cards</string>
     <string name="hello_world">Hello world!</string>
     <string name="menu_settings">Settings</string>
+	<string name="menu_purge">Purge</string>
     <string name="title_activity_main">Index Cards</string>
     <string name="add_new_card">Add new card</string>
     <string name="emptycardhint">Type something!</string>
-
+	
 </resources>
