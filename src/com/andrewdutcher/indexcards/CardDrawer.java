@@ -92,6 +92,10 @@ public class CardDrawer extends View {
 		out.putParcelableArray("cards", carddata);
 		out.putInt("width", getWidth());
 		out.putInt("height", getHeight());
+		if (currentCard == null)
+			out.putInt("current", -1);
+		else
+			out.putInt("current", cards.indexOf(currentCard));
 		return out;
 	}
 	public void restore() {
@@ -129,6 +133,11 @@ public class CardDrawer extends View {
 			cards.add(new IndexCard(this, idata));
 			
 		}
+		int cur = saved.getInt("current");
+		if (cur >= 0)
+			currentCard = cards.get(cur);
+		currentCard.savedSpot = new double[0];
+		input.client = currentCard;
 	}
 	protected void onDraw(Canvas c) {
 		for (int i = 0; i < zorder.size(); i++) {

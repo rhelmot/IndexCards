@@ -13,7 +13,7 @@ public class CardInput {
 	private MainActivity context;
 	private EditText textBox;
 	private float density;
-	private IndexCard client;
+	public IndexCard client;
 	
 	public CardInput(MainActivity baseContext, EditText inputTextBox, float screenDensity) {
 		context = baseContext;
