@@ -41,21 +41,20 @@ public class CardDrawer extends View {
 	public void addnew() {
 		if (currentCard != null)
 			return;
+		IndexCard tc = new IndexCard(this);
 		Rect r = new Rect();
 		r.left = this.getWidth()/2-5;
 		r.top = this.getHeight()/2-3;
 		r.right = r.left+10;
 		r.bottom = r.top+6;
-		String[] nmn = {};
-		IndexCard tc = new IndexCard(this, "", nmn, r, 0);
+		tc.cardDim = r;
 		cards.add(tc);
 		int index = cards.size()-1;
 		zorder.add(index);
 		tc.setRotOffset(5,3);
 		tc.rotation = 180;
-		tc.singletap();
-		double[] temp = {};
-		tc.savedSpot = temp;
+		tc.edit();
+		tc.savedSpot = new double[0];
 		invalidate();
 	}
 	
@@ -134,9 +133,10 @@ public class CardDrawer extends View {
 			
 		}
 		int cur = saved.getInt("current");
-		if (cur >= 0)
+		if (cur >= 0) {
 			currentCard = cards.get(cur);
-		currentCard.savedSpot = new double[0];
+			currentCard.savedSpot = new double[0];
+		}
 		input.client = currentCard;
 	}
 	protected void onDraw(Canvas c) {
@@ -146,7 +146,7 @@ public class CardDrawer extends View {
 				c.save();
 				a.draw(c);
 				c.restore();
-				if (a.deleting && !a.animating) {
+				if (!a.animating && a.animpurpose == 2) {
 					deleteCard(a);
 					i--;
 				}

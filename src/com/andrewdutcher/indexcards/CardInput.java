@@ -14,6 +14,7 @@ public class CardInput {
 	private EditText textBox;
 	private float density;
 	public IndexCard client;
+	public CardSide clientside;
 	
 	public CardInput(MainActivity baseContext, EditText inputTextBox, float screenDensity) {
 		context = baseContext;
@@ -23,20 +24,18 @@ public class CardInput {
 	
 	public void show(IndexCard target) {
 		client = target;
+		clientside = new CardSide(target.currentside.serialize());
 		RelativeLayout.LayoutParams rllp = new RelativeLayout.LayoutParams((int) context.mview.editspace[2]-50, (int) context.mview.editspace[3]-90); 
 		rllp.topMargin = 81;
 		rllp.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		textBox.setLayoutParams(rllp);
 		textBox.setVisibility(EditText.VISIBLE);
 		((InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(textBox, InputMethodManager.SHOW_FORCED);
-		revert();
 		target.editing = true;
-		target.drawcontrols = true;
-		target.animating = false;
 		context.mview.state = 2;
 		context.mview.mActionMode = context.mview.startActionMode(context.mview.singleSelectedAction);
 		context.mview.currentCard = target;
-		setTextSize(target.textStyle.getTextSize());
+		setTextSize(context.mview.editspace[3]);
 	}
 	
 	public void hide() {
@@ -45,9 +44,8 @@ public class CardInput {
 		textBox.setVisibility(EditText.INVISIBLE);
 		InputMethodManager imm = (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(textBox.getWindowToken(), 0);
-		client.cardLines = getLines();
-		client.cardText = get();
-		client.drawcontrols = false;
+		client.currentside.text = textBox.getText().toString();
+		client.currentside.lines = getLines(client.currentside.text, (int) context.mview.editspace[2] - 80, textBox.getPaint());
 		client.editing = false;
 		context.mview.state = 0;
 		if (client.savedSpot.length != 0) {
@@ -55,27 +53,20 @@ public class CardInput {
 			client.animdata = new AnimatedNums(context.mview.editspace, client.savedSpot, 400);
 		}
 		client = null;
+		clientside = null;
 	}
 	
-	public String get() {
-		return textBox.getText().toString();
-	}
-	
-	public String[] getLines() {
-		int width = (int) context.mview.editspace[2] - 80;
-		String[] initial = textBox.getText().toString().split("\n");
+	public static String[] getLines(String text, int width, Paint tp) {
+		String[] initial = text.split("\n");
 		ArrayList<String> out = new ArrayList<String>();
-		Paint tp = textBox.getPaint();
 		for (int i = 0; i < initial.length; i++) {
 			while (tp.measureText(initial[i]) > width) {
-				//Log.d("andrew", "Line '"+ initial[i] +"' too long");
 				int safe = 0;
 				int space;
 				for (space = 0;
 					space >= 0 && tp.measureText(initial[i], 0, space) < width;
 					space = initial[i].indexOf(" ", space+1)) {
 						safe = space;
-						//Log.d("andrew", "Space found: " + ((Integer) safe).toString());
 				}
 				if (safe == 0 || (safe + 1 == initial[i].length()))
 					break;
@@ -84,26 +75,14 @@ public class CardInput {
 			}
 			out.add(initial[i]);
 		}
-		//out.set(out.size()-1,out.get(out.size()-1).substring(0,out.get(out.size()-1).length()-1));
 		return out.toArray(new String[out.size()]);
-	}	
-	public void set(String text) {
-		textBox.setText(text);
 	}
-	
-	/*public void setLines(String[] text) {
-		String out = "";
-		for (int i = 0; i < text.length; i++) {
-			out += text[i];
-		}
-		set(out);
-	}*/
 	
 	public void revert() {
-		set(client.cardText);
+		client.currentside = new CardSide(clientside.serialize());
 	}
 
-	private void setTextSize(float f) {
-		textBox.setTextSize(f/density);
+	private void setTextSize(double height) {
+		textBox.setTextSize((float) (height*clientside.textSize/density));
 	}
 }
