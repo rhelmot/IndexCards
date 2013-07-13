@@ -37,6 +37,7 @@ public class CardDrawer extends View {
 	public float density;
 	
 	public Bundle saved = null;
+	public boolean restored = false;
 	
 	public void addnew() {
 		if (currentCard != null)
@@ -97,15 +98,24 @@ public class CardDrawer extends View {
 			out.putInt("current", cards.indexOf(currentCard));
 		return out;
 	}
-	public void restore() {
+	
+	public void calculateEditspace() {
+		if (editspace != null && editspace.length > 0 && editspace[2] > 0)
+			return;
+		Log.d("andrew", "actually refocused");
 		int wid = getWidth();
-		int hei = getHeight();
+		Log.d("andrew", "used width: " + ((Integer) wid).toString());
 		int width = (int) ((500*density > wid)?wid:500*density);
 		double[] facs = {(wid - width)/2, 20*density, width, 0.6f*width, width/2, 0.6f*width/2, 0};
 		editspace = facs;
-		if (saved == null) {
+	}
+	
+	public void restore() {
+		calculateEditspace();
+		if (saved == null || restored) {
 			return;
 		}
+		restored = true;
 		cards = new ArrayList<IndexCard>();
 		zorder = new ArrayList<Integer>();
 		boolean resize = (saved.getInt("width") != getWidth()) || (saved.getInt("height") != getHeight());
@@ -122,10 +132,11 @@ public class CardDrawer extends View {
 				double cdy = (Math.cos(Math.toRadians(rot))*h + Math.sin(Math.toRadians(rot))*w)/2;
 				double cx = x + cdx;
 				double cy = y + cdy;
-				cx = wid*cx/saved.getInt("width");
-				cy = hei*cy/saved.getInt("height");
+				cx = getWidth()*cx/saved.getInt("width");
+				cy = getHeight()*cy/saved.getInt("height");
 				idata.putInt("x", (int) (cx - cdx));
 				idata.putInt("y", (int) (cy - cdy));
+				idata.putDoubleArray("savedspot", new double[0]);
 			}
 			if (idata.getInt("zorder") >= 0)
 				zorder.add(i,idata.getInt("zorder"));
@@ -252,7 +263,6 @@ public class CardDrawer extends View {
 			// Inflate a menu resource providing context menu items
 			MenuInflater inflater = mode.getMenuInflater();
 			inflater.inflate(R.menu.edit_single, menu);
-			Log.d("andrew", "a");
 			return true;
 		}
 		
@@ -263,7 +273,6 @@ public class CardDrawer extends View {
 
 		@Override
 		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-			Log.d("andrew", "d");
 			switch (item.getItemId()) {
 				case R.id.menu_delete_single:
 					input.hide();
@@ -273,6 +282,9 @@ public class CardDrawer extends View {
 				case R.id.menu_cancel_edit:
 					input.revert();
 					mode.finish();
+					return true;
+				case R.id.menu_new_side:
+					input.newside();
 					return true;
 				default:
 					return false;

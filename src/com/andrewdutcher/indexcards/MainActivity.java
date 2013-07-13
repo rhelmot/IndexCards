@@ -2,6 +2,7 @@ package com.andrewdutcher.indexcards;
 
 
 import android.os.Bundle;
+import android.util.Log;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,6 +14,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+		Log.d("andrew", "~~~~~~~~APP STARTED~~~~~~~~");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mview = (CardDrawer) findViewById(R.id.drawer);
@@ -49,17 +51,20 @@ public class MainActivity extends Activity {
     public void onSaveInstanceState(Bundle outState) {
     	super.onSaveInstanceState(outState);
     	outState.putBundle("mview", mview.serialize());
+		Log.d("andrew", "saved");
     }
     
     public void onRestoreInstanceState(Bundle savedInstanceState) {
     	if (savedInstanceState != null && savedInstanceState.containsKey("mview")) {
         	mview.saved = savedInstanceState.getBundle("mview");
         }
+		Log.d("andrew", "restored");
     }
     
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
     	super.onWindowFocusChanged(hasFocus);
-    	mview.restore();
+		mview.restore();
+		Log.d("andrew", "refocused");
     }
 }

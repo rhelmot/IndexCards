@@ -45,7 +45,7 @@ public class IndexCard {
 	public boolean animating;
 	public AnimatedNums animdata;	//{x, y, width, height, rotation}
 	public int animpurpose;
-	public double[] savedSpot = {};		//[x, y, width, height, offsetx, offsety, rotation]
+	public double[] savedSpot = new double[0];		//[x, y, width, height, offsetx, offsety, rotation]
 	
 	public String debugdata;
 	
@@ -56,8 +56,8 @@ public class IndexCard {
 	
 	public IndexCard(CardDrawer context) {
 		ArrayList<CardSide> temp = new ArrayList<CardSide>();
-		currentside = new CardSide();
-		temp.add(currentside);
+		CardSide tempd = new CardSide();
+		temp.add(tempd);
 		init(context, temp, 0, new Rect(100, 60, 200, 120), 0, new double[0]);
 	}
 	
@@ -90,6 +90,7 @@ public class IndexCard {
 		savedSpot = spot;
 		sides = sidelist;
 		sidenum = sidenumber;
+		currentside = sides.get(sidenum);
 	}
 	
 	public Bundle serialize()
@@ -97,6 +98,7 @@ public class IndexCard {
 		Bundle out = new Bundle();
 		if (animating) {
 			double[] finals = animdata.endvalues;
+			//TODO: fix this in flipping
 			cardDim = new Rect((int) finals[0], (int) finals[1], (int) finals[2], (int) finals[3]);
 			if (editing) {
 				parent.state = 2;
@@ -112,7 +114,7 @@ public class IndexCard {
 		out.putBoolean("editing", editing);
 		if (!editing)
 			saveSpot();
-		out.putDoubleArray("savedSpot", savedSpot);
+		out.putDoubleArray("savedspot", savedSpot);
 		Parcelable[] sidepak = new Parcelable[sides.size()];
 		for (int i = 0; i < sidepak.length; i++) {
 			sidepak[i] = sides.get(i).serialize();
@@ -133,16 +135,14 @@ public class IndexCard {
 				animating = false;
 				if (animpurpose == 1) {
 					parent.input.show(this);
-				} else if (animpurpose == 3) {
-					Log.d("andrew", "Sidenum before: " + ((Integer) sidenum).toString());
-					Log.d("andrew", "Size: " + ((Integer) sidenum).toString());
+					animpurpose = 0;
+				} else if (animpurpose == 3 || animpurpose== 4) {
 					sidenum = (sidenum + 1) % sides.size();
-					Log.d("andrew", "Sidenum after: " + ((Integer) sidenum).toString());
 					currentside = sides.get(sidenum);
 					animdata = new AnimatedNums(data, savedSpot, 200, AnimatedNums.getArrayOfEases(Easing.EASEOUT, 7));
 					animating = true;
+					animpurpose = (animpurpose == 3) ? 0 : 1;
 				}
-				animpurpose = 0;
 			}
 			cardDim.offsetTo((int) data[0], (int) data[1]);
 			cardDim.right = cardDim.left + (int) data[2];

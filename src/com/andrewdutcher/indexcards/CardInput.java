@@ -44,8 +44,7 @@ public class CardInput {
 		textBox.setVisibility(EditText.INVISIBLE);
 		InputMethodManager imm = (InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(textBox.getWindowToken(), 0);
-		client.currentside.text = textBox.getText().toString();
-		client.currentside.lines = getLines(client.currentside.text, (int) context.mview.editspace[2] - 80, textBox.getPaint());
+		commit();
 		client.editing = false;
 		context.mview.state = 0;
 		if (client.savedSpot.length != 0) {
@@ -78,11 +77,25 @@ public class CardInput {
 		return out.toArray(new String[out.size()]);
 	}
 	
+	public void commit() {
+		client.currentside.text = textBox.getText().toString();
+		client.currentside.lines = getLines(client.currentside.text, (int) context.mview.editspace[2] - 80, textBox.getPaint());
+	}
+	
 	public void revert() {
 		client.currentside = new CardSide(clientside.serialize());
 	}
 
 	private void setTextSize(double height) {
 		textBox.setTextSize((float) (height*clientside.textSize/density));
+	}
+	
+	public void newside() {
+		commit();
+		textBox.setVisibility(EditText.INVISIBLE);
+		clientside = new CardSide();
+		client.sides.add(client.sidenum + 1, clientside);
+		client.flip();
+		client.animpurpose = 4;
 	}
 }
