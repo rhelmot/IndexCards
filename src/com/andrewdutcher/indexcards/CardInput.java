@@ -33,7 +33,8 @@ public class CardInput {
 		((InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(textBox, InputMethodManager.SHOW_FORCED);
 		target.editing = true;
 		context.mview.state = 2;
-		context.mview.mActionMode = context.mview.startActionMode(context.mview.singleSelectedAction);
+		if (context.mview.mActionMode == null)
+			context.mview.mActionMode = context.mview.startActionMode(context.mview.singleSelectedAction);
 		context.mview.currentCard = target;
 		setTextSize(context.mview.editspace[3]);
 	}
