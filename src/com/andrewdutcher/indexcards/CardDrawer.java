@@ -140,7 +140,7 @@ public class CardDrawer extends View {
 			}
 			if (idata.getInt("zorder") >= 0)
 				zorder.add(i,idata.getInt("zorder"));
-			cards.add(new IndexCard(this, idata));
+			cards.add(i, new IndexCard(this, idata));
 			
 		}
 		int cur = saved.getInt("current");

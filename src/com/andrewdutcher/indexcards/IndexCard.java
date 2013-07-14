@@ -72,7 +72,7 @@ public class IndexCard {
 		Parcelable[] cardpak = serialdata.getParcelableArray("sides");
 		for (int i = 0; i < cardpak.length; i++)
 			temp.add(new CardSide((Bundle) cardpak[i]));
-		init(context, temp, serialdata.getInt("curentside"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), serialdata.getDoubleArray("savedspot"));
+		init(context, temp, serialdata.getInt("currentside"), new Rect(x,y,x+serialdata.getInt("w"),y+serialdata.getInt("h")),serialdata.getFloat("rot"), serialdata.getDoubleArray("savedspot"));
 		if (serialdata.getBoolean("editing")) {
 			cardDim = new Rect((int)parent.editspace[0],(int)parent.editspace[1],(int)(parent.editspace[0]+parent.editspace[2]),(int)(parent.editspace[1]+parent.editspace[3]));
 			parent.input.show(this);
@@ -90,7 +90,7 @@ public class IndexCard {
 		savedSpot = spot;
 		sides = sidelist;
 		sidenum = sidenumber;
-		currentside = sides.get(sidenum);
+		currentside = sides.get(sidenumber);
 	}
 	
 	public Bundle serialize()
@@ -98,7 +98,10 @@ public class IndexCard {
 		Bundle out = new Bundle();
 		if (animating) {
 			double[] finals = animdata.endvalues;
-			//TODO: fix this in flipping
+			if (animpurpose == 3)
+				finals = savedSpot;
+			else if (animpurpose == 4)
+				finals = parent.editspace;
 			cardDim = new Rect((int) finals[0], (int) finals[1], (int) finals[2], (int) finals[3]);
 			if (editing) {
 				parent.state = 2;
@@ -169,7 +172,7 @@ public class IndexCard {
 		}
 		cardDim.inset(2, 3);
 		c.drawRect(cardDim, currentside.fillStyle);
-		if (!editing) {
+		if (!editing || animating) {
 			Paint textStyle = currentside.getTextStyle(cardDim.height(), cardDim.width());
 			float linespace = textStyle.getFontMetrics().descent - textStyle.getFontMetrics().ascent;
 			float starty = cardDim.centerY() - (linespace*(currentside.lines.length-1)/2) + (linespace/2);

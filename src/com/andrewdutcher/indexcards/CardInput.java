@@ -22,14 +22,19 @@ public class CardInput {
 		density = screenDensity;
 	}
 	
-	public void show(IndexCard target) {
-		client = target;
-		clientside = new CardSide(target.currentside.serialize());
+	private void textboxLayout() {
 		RelativeLayout.LayoutParams rllp = new RelativeLayout.LayoutParams((int) context.mview.editspace[2]-50, (int) context.mview.editspace[3]-90); 
 		rllp.topMargin = 81;
 		rllp.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		textBox.setLayoutParams(rllp);
+		
+	}
+	
+	public void show(IndexCard target) {
+		client = target;
+		revert();
 		textBox.setVisibility(EditText.VISIBLE);
+		textboxLayout();
 		((InputMethodManager)context.getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(textBox, InputMethodManager.SHOW_FORCED);
 		target.editing = true;
 		context.mview.state = 2;
@@ -84,7 +89,8 @@ public class CardInput {
 	}
 	
 	public void revert() {
-		client.currentside = new CardSide(clientside.serialize());
+		clientside = new CardSide(client.currentside.serialize());
+		textBox.setText(clientside.text);
 	}
 
 	private void setTextSize(double height) {
@@ -98,5 +104,7 @@ public class CardInput {
 		client.sides.add(client.sidenum + 1, clientside);
 		client.flip();
 		client.animpurpose = 4;
+		client = null;
+		clientside = null;
 	}
 }
