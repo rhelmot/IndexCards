@@ -170,7 +170,7 @@ public class IndexCard {
 		cardDim.inset(2, 3);
 		c.drawRect(cardDim, currentside.fillStyle);
 		if (!editing) {
-			Paint textStyle = currentside.getTextStyle(cardDim.height());
+			Paint textStyle = currentside.getTextStyle(cardDim.height(), cardDim.width());
 			float linespace = textStyle.getFontMetrics().descent - textStyle.getFontMetrics().ascent;
 			float starty = cardDim.centerY() - (linespace*(currentside.lines.length-1)/2) + (linespace/2);
 			for (int i = 0; i < currentside.lines.length; i++) {

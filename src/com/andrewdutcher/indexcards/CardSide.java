@@ -37,8 +37,12 @@ public class CardSide {
 		return out;
 	}
 	
-	public Paint getTextStyle(int height) {
+	public Paint getTextStyle(int height, int width) {
+		float ratio = ((float)height)/((float)width);
+		//default: height = width * 3/5
+		float adjustedratio = (float) (0.6/ratio);
 		textStyle.setTextSize(height * textSize);
+		textStyle.setTextScaleX(adjustedratio);
 		return textStyle;
 	}
 }
