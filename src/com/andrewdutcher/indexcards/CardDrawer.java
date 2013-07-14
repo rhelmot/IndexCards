@@ -19,25 +19,22 @@ import android.view.*;
 public class CardDrawer extends View {
 	
 	public ArrayList<IndexCard> cards;
-	public IndexCard currentCard;
+	public ArrayList<IndexCard>  selectedCards = new ArrayList<IndexCard>();
+	public IndexCard currentCard;		//above: multiselect - left & below: single select
+	public CardInput input;
 	public ArrayList<Integer> zorder;
-	
-	public NinePatchDrawable shadowimg;
-	public NinePatchDrawable selshadowimg;
-	
+	public double[] editspace;  //data describing the location for a card being edited
+
+	public int state;		//0 = working //1 = animating to edits //2 = editing
 	public ActionMode mActionMode;
 	public MainActivity parent;
-	
-	public double[] editspace;  //data describing the location for a card being edited
-	
-	public CardInput input;
-	
-	public int state;		//0 = working //1 = animating to edits //2 = editing
-	
 	public float density;
 	
 	public Bundle saved = null;
 	public boolean restored = false;
+	
+	public NinePatchDrawable shadowimg;
+	public NinePatchDrawable selshadowimg;
 	
 	public void addnew() {
 		if (currentCard != null)
@@ -170,7 +167,11 @@ public class CardDrawer extends View {
 		}
 	}
 	public boolean onTouchEvent(MotionEvent e) {
-		if (state != 0)
+		if (state == 2) {
+			mActionMode.finish();
+			return false;
+		}
+		if (state != 0 && state != 3)
 			return false;
 		Integer action = e.getAction() & MotionEvent.ACTION_MASK;
 		if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN)
@@ -296,6 +297,49 @@ public class CardDrawer extends View {
 			mActionMode = null;
 			input.hide();
 			currentCard = null;
+			invalidate();
+		}
+	};
+	
+	public ActionMode.Callback multiSelectedAction = new ActionMode.Callback() {
+		@Override
+		public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+			// Inflate a menu resource providing context menu items
+			MenuInflater inflater = mode.getMenuInflater();
+			inflater.inflate(R.menu.edit_multiple, menu);
+			state = 3;
+			return true;
+		}
+
+		@Override
+		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			return false; // Return false if nothing is done
+		}
+
+		@Override
+		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+			switch (item.getItemId()) {
+				case R.id.menu_delete_multiple:
+					for (int i = 0; i < selectedCards.size(); i++)
+						selectedCards.get(i).delete();
+					mode.finish();
+					return true;
+				case R.id.menu_select_all:
+					for (int i = 0; i < cards.size(); i++)
+						cards.get(i).multiSelect();
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		@Override
+		public void onDestroyActionMode(ActionMode mode) {
+			mActionMode = null;
+			state = 0;
+			int l = selectedCards.size();
+			for (int i = 0; i < l; i++)
+				selectedCards.get(0).multiDeselect();
 			invalidate();
 		}
 	};

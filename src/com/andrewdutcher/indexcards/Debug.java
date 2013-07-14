@@ -20,4 +20,8 @@ public class Debug {
 	public static void log(String msg, float data) {
 		log(msg + ((Float) data).toString());
 	}
+	
+	public static void log(String msg, boolean data) {
+		log(msg + ((Boolean) data).toString());
+	}
 }

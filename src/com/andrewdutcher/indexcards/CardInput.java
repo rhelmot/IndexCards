@@ -88,7 +88,7 @@ public class CardInput {
 		client.currentside.lines = getLines(client.currentside.text, (int) context.mview.editspace[2] - 80, textBox.getPaint());
 	}
 	
-	public void revert() {
+	public void revert() {		//TODO: Fix state preservation on rotation
 		clientside = new CardSide(client.currentside.serialize());
 		textBox.setText(clientside.text);
 	}

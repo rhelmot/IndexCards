@@ -18,41 +18,41 @@ import android.view.ActionMode;
 public class IndexCard {
 	public Rect cardDim;
 	public float rotation;
-	public Rect oCardDim;
-	public float oRotation;
-	public float scalefactor = 1;
-	
-	public int[] touches = {-1, -1, -1};
-	public float touchangref;
-	public float touchdistref;
-	public float touchxref;
-	public float touchyref;
-	public float touchzref;
-	
-	public float offsetx;			//distance from card corner to rot point, cardspace
-	public float offsety;
-	public float oOffsetx;
-	public float oOffsety;
-	
-	public boolean selected = false;
-	public int deltaz;
-	
-	public long timetouch;
-	public boolean singletouch;
-	public boolean holdtouch;
-	
-	public boolean editing;
-	public boolean animating;
-	public AnimatedNums animdata;	//{x, y, width, height, rotation}
-	public int animpurpose;
-	public double[] savedSpot = new double[0];		//[x, y, width, height, offsetx, offsety, rotation]
-	
-	public String debugdata;
-	
+	public float offsetx;			// distance from card coordinates (UL corner)
+	public float offsety;			// to rot point, cardspace
+	public double[] savedSpot;		//[x, y, width, height, offsetx, offsety, rotation]
+
 	public CardDrawer parent;
 	public CardSide currentside;
 	public ArrayList<CardSide> sides;
 	public int sidenum;
+
+	public long timetouch;
+	public boolean singletouch = false;
+	public boolean holdtouch;
+	public int deltaz;
+
+	public boolean selected = false;
+	public boolean multiSelected = false;
+	public boolean animating;
+	public boolean editing;
+	public AnimatedNums animdata;
+	public int animpurpose;
+	
+	private Rect oCardDim;
+	private float oRotation;
+	private float oOffsetx;
+	private float oOffsety;
+	private float scalefactor = 1;
+	
+	private int[] touches = {-1, -1, -1};
+	private float touchangref;
+	private float touchdistref;
+	private float touchxref;
+	private float touchyref;
+	private float touchzref;
+	
+	public String debugdata;
 	
 	public IndexCard(CardDrawer context) {
 		ArrayList<CardSide> temp = new ArrayList<CardSide>();
@@ -60,10 +60,6 @@ public class IndexCard {
 		temp.add(tempd);
 		init(context, temp, 0, new Rect(100, 60, 200, 120), 0, new double[0]);
 	}
-	
-	/*public IndexCard(CardDrawer context, ArrayList<CardSide> cardside, Rect bounds, float rotdeg) {
-		init(context, cardside, bounds, rotdeg, new double[0]);
-	}*/
 	
 	public IndexCard(CardDrawer context, Bundle serialdata) {
 		int x = serialdata.getInt("x");
@@ -79,8 +75,7 @@ public class IndexCard {
 		}
 	}
 	
-	public void init(CardDrawer context, ArrayList<CardSide> sidelist, int sidenumber, Rect bounds, float rotdeg, double[] spot) 
-	{
+	public void init(CardDrawer context, ArrayList<CardSide> sidelist, int sidenumber, Rect bounds, float rotdeg, double[] spot)  {
 		parent = context;
 		editing = false;
 		animating = false;
@@ -93,8 +88,7 @@ public class IndexCard {
 		currentside = sides.get(sidenumber);
 	}
 	
-	public Bundle serialize()
-	{
+	public Bundle serialize() {
 		Bundle out = new Bundle();
 		if (animating) {
 			double[] finals = animdata.endvalues;
@@ -127,8 +121,7 @@ public class IndexCard {
 		return out;
 	}
 	
-	public void draw(Canvas c)
-	{
+	public void draw(Canvas c) {
 		if (animating) {
 			double[] data;
 			if (animdata.isActive())
@@ -159,11 +152,9 @@ public class IndexCard {
 				unsetRotPoint();
 			}
 		}
-		//drawDebugPoint(cardDim.left, cardDim.top, c);
 		c.rotate(rotation, cardDim.left+offsetx, cardDim.top+offsety);
-		//drawDebugPoint(cardDim.left, cardDim.top, c);
 		cardDim.inset(-2, -3);
-		if (selected) {
+		if (selected || multiSelected) {
 			parent.selshadowimg.setBounds(cardDim);
 			parent.selshadowimg.draw(c);
 		} else {
@@ -184,33 +175,29 @@ public class IndexCard {
 	}
 	
 	public boolean addPoint(MotionEvent e, int index) {
-		//Log.d("andrew","down");
 		if (editing) {					//this should never happen
-			parent.input.hide();	//but just in case
+			parent.input.hide();		//but just in case
 			return true;
 		}
+		holdtouch = false;
 		int id = e.getPointerId(index);
-		if (touches[0] == -1)
-		{
+		if (touches[0] == -1) {
 			touches[0] = id;
 			touchxref = e.getX(index);
 			touchyref = e.getY(index);
 			oCardDim = new Rect(cardDim);
 			timetouch = System.currentTimeMillis();
 			selected = true;
-			if (!singletouch)
-			{
+			if (!singletouch) {
 				holdtouch = true;
 				new Handler().postDelayed(new Runnable() {
 					public void run() {
 						if (holdtouch)
-							Log.d("andrew","Longtap!");
+							longtap();
 					}
 				}, 1100);
 			}
-		}
-		else if (touches[1] == -1)
-		{
+		} else if (touches[1] == -1) {
 			touches[1] = id;
 			int index0 = e.findPointerIndex(touches[0]);
 			touchdistref = getdist(e.getX(index0), e.getY(index0), e.getX(index), e.getY(index));
@@ -223,78 +210,57 @@ public class IndexCard {
 			setRotPoint(touchxref, touchyref);
 			oOffsetx = offsetx;
 			oOffsety = offsety;
-		}
-		else if (touches[2] == -1)
-		{
+		} else if (touches[2] == -1) {
 			touches[2] = id;
 			touchzref = e.getY(index);
 		}
 		return true;
 	}
-	public void processTouches(MotionEvent e)
-	{
+	
+	public void processTouches(MotionEvent e) {
 		if (animating)
 			return;
-		holdtouch = false;
 		int action = e.getAction() & MotionEvent.ACTION_MASK;
-		if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_POINTER_UP)
-		{
+		if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_POINTER_UP) {
+			holdtouch = false;
 			int index = 0;
 			if (action == MotionEvent.ACTION_POINTER_UP)
 				index = e.getActionIndex();
 			int id = e.getPointerId(index);
-			if (touches[2] == id)
-			{
+			if (touches[2] == id) {
 				touches[2] = -1;
-			}
-			else if (touches[1] == id)
-			{
+			} else if (touches[1] == id) {
 				unsetRotPoint();
-				
 				int index0 = e.findPointerIndex(touches[0]);
 				touches[1] = -1;
 				touchxref = e.getX(index0);
 				touchyref = e.getY(index0);
 				oCardDim = new Rect(cardDim);
-			}
-			else if (touches[0] == id)
-			{
-				if (touches[1] == -1)
-				{
+			} else if (touches[0] == id) {
+				if (touches[1] == -1) {
 					touches[0] = -1;
 					selected = false;
-					
-					if (singletouch)
-					{
+					if (singletouch) {
 						singletouch = false;
 						doubletap();
-					}
-					else
-					{
+					} else {
 						long ctime = System.currentTimeMillis();
 						long dtime = ctime - timetouch;
-						if (dtime < 150)
-						{
+						if (dtime < 150) {
 							timetouch = ctime;
 							singletouch = true;
 							new Handler().postDelayed(new Runnable() {
-	
 								public void run() {
-									if (singletouch)
-									{
+									if (singletouch) {
 										singletouch = false;
 										singletap();
 									}
 								}
-								
 							}, 250);
 						}
 					}
-				}
-				else
-				{
+				} else {
 					unsetRotPoint();
-					
 					int index0 = e.findPointerIndex(touches[1]);
 					touches[0] = touches[1];
 					touches[1] = -1;
@@ -304,21 +270,19 @@ public class IndexCard {
 				}
 			}
 		}
-		else if (e.getAction() == MotionEvent.ACTION_MOVE)
-		{
+		else if (e.getAction() == MotionEvent.ACTION_MOVE) {
 			timetouch -= 20;
-			if (touches[0] == -1)
-			{}
-			else if (touches[1] == -1)
-			{
+			if (touches[0] == -1) {}
+			else if (touches[1] == -1) {
 				int index = e.findPointerIndex(touches[0]);
 				cardDim.set(oCardDim);
 				int dx = (int) (e.getX(index)-touchxref);
 				int dy = (int) (e.getY(index)-touchyref);
-				cardDim.offset(dx,dy);
-			}
-			else
-			{
+				if (!holdtouch || (dx*dx + dy*dy > 100)) {
+					holdtouch = false;
+					cardDim.offset(dx,dy);
+				}
+			} else {
 				int index1 = e.findPointerIndex(touches[0]);
 				int index2 = e.findPointerIndex(touches[1]);
 				float frm = getangle(e.getX(index1), e.getY(index1), e.getX(index2), e.getY(index2));
@@ -338,21 +302,15 @@ public class IndexCard {
 				cardDim.right += oCardDim.width()*(scalefactor-1);
 				cardDim.bottom += oCardDim.height()*(scalefactor-1);
 				cardDim.offsetTo((int) (rotx-offsetx),(int) (roty-offsety));
-				
-				
 			}
-			if (touches[2] != -1)
-			{
+			if (touches[2] != -1) {
 				int index2 = e.findPointerIndex(touches[2]);
 				float cz = e.getY(index2);
 				float dz = touchzref-cz;
-				if (dz > 40)
-				{
+				if (dz > 40) {
 					deltaz++;
 					touchzref = cz;
-				}
-				else if (dz < -40)
-				{
+				} else if (dz < -40) {
 					deltaz--;
 					touchzref = cz;
 				}
@@ -394,16 +352,26 @@ public class IndexCard {
 	
 	public void cancelTouches() {
 		if (touches[1] != -1)
-		{
 			unsetRotPoint();
-		}
 		touches[0] = -1;
 		touches[1] = -1;
 		touches[2] = -1;
 	}
 	
 	public void singletap() {
-		edit();
+		if (parent.state == 0)
+			edit();
+		else if (parent.state == 3) {
+			multiToggle();
+		}
+	}
+	
+	public void doubletap() {
+		flip();
+	}
+
+	public void longtap() {
+		multiSelect();
 	}
 	
 	public void edit() {
@@ -417,10 +385,6 @@ public class IndexCard {
 		parent.invalidate();
 	}
 	
-	public void doubletap() {
-		flip();
-	}
-	
 	public void flip() {
 		saveSpot();
 		double temp[] = {	savedSpot[0] - (cardDim.height() * Math.sin(Math.toRadians(rotation)) / 2),
@@ -432,8 +396,34 @@ public class IndexCard {
 		parent.invalidate();
 	}
 	
-	public void longtap() {
-		
+	public void multiSelect() {
+		if (multiSelected)
+			return;
+		multiSelected = true;
+		parent.selectedCards.add(this);
+		if (parent.state == 0) {
+			if (parent.mActionMode == null)
+				parent.mActionMode = parent.startActionMode(parent.multiSelectedAction);
+		}
+		parent.invalidate();
+	}
+	
+	public void multiDeselect() {
+		if (!multiSelected)
+			return;
+		multiSelected = false;
+		parent.selectedCards.remove(this);
+		if (parent.state == 3 && parent.selectedCards.size() == 0) {
+			parent.mActionMode.finish();
+		}
+		parent.invalidate();
+	}
+	
+	public void multiToggle() {
+		if (multiSelected)
+			multiDeselect();
+		else
+			multiSelect();
 	}
 	
 	public void saveSpot() {
@@ -455,12 +445,6 @@ public class IndexCard {
 		int cy = cardDim.top;
 		if (offsetx != 0 || offsety != 0)
 		{
-			/*double y2 = offsety/Math.cos(Math.toRadians(rotation));
-			double x2 = offsety*Math.tan(Math.toRadians(rotation));
-			double x1 = offsetx - x2;
-			cx = (int) (x1*Math.cos(Math.toRadians(rotation)));
-			double y1 = x1*Math.sin(Math.toRadians(rotation));
-			cy = (int) (y1+y2);*/
 			Vector ux = new Vector(-offsetx, rotation);
 			Vector uy = new Vector(-offsety, rotation + 90);
 			cx += ux.getX() + uy.getX() + offsetx;
@@ -493,6 +477,7 @@ public class IndexCard {
 			out += 180;
 		return out;
 	}
+	
 	private float getdist(float x1, float y1, float x2, float y2) {
 		return (float) Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2, 2));
 	}

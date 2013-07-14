@@ -14,7 +14,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-		Log.d("andrew", "~~~~~~~~APP STARTED~~~~~~~~");
+		Debug.log("~~~~~~~~APP STARTED~~~~~~~~");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mview = (CardDrawer) findViewById(R.id.drawer);
