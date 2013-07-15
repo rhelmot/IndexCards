@@ -1,6 +1,7 @@
 package com.andrewdutcher.indexcards;
 
 import java.util.ArrayList;
+
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
@@ -11,7 +12,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ActionMode;
 

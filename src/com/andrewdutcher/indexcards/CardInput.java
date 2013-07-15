@@ -3,11 +3,10 @@ package com.andrewdutcher.indexcards;
 import java.util.ArrayList;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.graphics.*;
+import android.graphics.Paint;
 
 public class CardInput {
 	private MainActivity context;

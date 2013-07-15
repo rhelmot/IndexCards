@@ -1,7 +1,5 @@
 package com.andrewdutcher.indexcards;
 
-import android.util.Log;
-
 public class AnimatedNums {
 	
 	public int runtime;
