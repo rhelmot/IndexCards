@@ -73,7 +73,6 @@ public class CardDrawer extends View {
 		zorder = new ArrayList<Integer>();
 		state = 0;
 		density = getResources().getDisplayMetrics().density;
-		//Log.d("andrew", ((Float)density).toString());
 	}
 	public Bundle serialize() {
 		Bundle out = new Bundle();
@@ -89,6 +88,7 @@ public class CardDrawer extends View {
 		out.putParcelableArray("cards", carddata);
 		out.putInt("width", getWidth());
 		out.putInt("height", getHeight());
+		out.putInt("numCards", zorder.size());
 		if (currentCard == null)
 			out.putInt("current", -1);
 		else
@@ -115,6 +115,10 @@ public class CardDrawer extends View {
 		restored = true;
 		cards = new ArrayList<IndexCard>();
 		zorder = new ArrayList<Integer>();
+		int soItHasComeToThis = saved.getInt("numCards");
+		for (int i = 0; i < soItHasComeToThis; i++) {
+			zorder.add(-1);
+		}
 		boolean resize = (saved.getInt("width") != getWidth()) || (saved.getInt("height") != getHeight());
 		Parcelable[] carddata = saved.getParcelableArray("cards");
 		for (int i = 0; i < carddata.length; i++) {
@@ -136,7 +140,7 @@ public class CardDrawer extends View {
 				idata.putDoubleArray("savedspot", new double[0]);
 			}
 			if (idata.getInt("zorder") >= 0)
-				zorder.add(i,idata.getInt("zorder"));
+				zorder.set(idata.getInt("zorder"), i);
 			cards.add(i, new IndexCard(this, idata));
 			
 		}

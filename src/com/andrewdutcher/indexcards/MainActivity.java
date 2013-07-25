@@ -1,6 +1,7 @@
 package com.andrewdutcher.indexcards;
 
 import android.os.Bundle;
+import android.content.Intent;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,7 +29,9 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_settings:
-                //TODO: Add settings activity
+                Intent settingsIntent = new Intent();
+				settingsIntent.setAction("android.intent.action.SETTINGS");
+				startActivity(settingsIntent);
                 return true;
             case R.id.menu_addnew:
             	mview.addnew();
