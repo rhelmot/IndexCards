@@ -171,11 +171,7 @@ public class CardDrawer extends View {
 		}
 	}
 	public boolean onTouchEvent(MotionEvent e) {
-		if (state == 2) {
-			mActionMode.finish();
-			return false;
-		}
-		if (state != 0 && state != 3)
+		if (state == 1)
 			return false;
 		Integer action = e.getAction() & MotionEvent.ACTION_MASK;
 		if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN)
@@ -187,6 +183,12 @@ public class CardDrawer extends View {
 			}
 			float tx = e.getX(index);
 			float ty = e.getY(index);
+			if (state == 2) {
+				if (currentCard.doesPointTouch((int) tx, (int) ty))
+					return false;
+				mActionMode.finish();
+				return true;
+			}
 			for (int i = zorder.size() - 1; i >= 0; i--) {
 				IndexCard tc = cards.get(zorder.get(i));
 				if (tc.animating)

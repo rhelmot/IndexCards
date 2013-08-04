@@ -16,6 +16,7 @@ public class CardSide {
 		textStyle.setARGB(255, 0, 0, 0);
 		textStyle.setTypeface(Typeface.SANS_SERIF);
 		textStyle.setTextAlign(Paint.Align.CENTER);
+		textStyle.setAntiAlias(true);
 	}
 	
 	public CardSide(Bundle serialdata) {

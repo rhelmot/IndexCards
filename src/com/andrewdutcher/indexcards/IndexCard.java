@@ -122,6 +122,7 @@ public class IndexCard {
 	}
 	
 	public void draw(Canvas c) {
+		boolean singlePurpose = false;
 		if (animating) {
 			double[] data;
 			if (animdata.isActive())
@@ -132,6 +133,7 @@ public class IndexCard {
 				if (animpurpose == 1) {
 					parent.input.show(this);
 					animpurpose = 0;
+					singlePurpose = true;
 				} else if (animpurpose == 3 || animpurpose== 4) {
 					sidenum = (sidenum + 1) % sides.size();
 					currentside = sides.get(sidenum);
@@ -163,10 +165,10 @@ public class IndexCard {
 		}
 		cardDim.inset(2, 3);
 		c.drawRect(cardDim, currentside.fillStyle);
-		if (!editing || animating) {
+		if (!editing || animating || singlePurpose) {
 			Paint textStyle = currentside.getTextStyle(cardDim.height(), cardDim.width());
 			float linespace = textStyle.getFontMetrics().descent - textStyle.getFontMetrics().ascent;
-			float starty = cardDim.centerY() - (linespace*(currentside.lines.length-1)/2) + (linespace/2);
+			float starty = cardDim.centerY() - (linespace*(currentside.lines.length-1)/2) + textStyle.getFontMetrics().descent + textStyle.getFontMetrics().bottom/2;
 			for (int i = 0; i < currentside.lines.length; i++) {
 				c.drawText(currentside.lines[i], cardDim.centerX(), starty, textStyle);
 				starty += linespace;

@@ -22,8 +22,8 @@ public class CardInput {
 	}
 	
 	private void textboxLayout() {
-		RelativeLayout.LayoutParams rllp = new RelativeLayout.LayoutParams((int) context.mview.editspace[2]-50, (int) context.mview.editspace[3]-90); 
-		rllp.topMargin = 81;
+		RelativeLayout.LayoutParams rllp = new RelativeLayout.LayoutParams((int) context.mview.editspace[2], (int) context.mview.editspace[3]); 
+		rllp.topMargin = (int) (context.mview.editspace[1]);
 		rllp.addRule(RelativeLayout.CENTER_HORIZONTAL);
 		textBox.setLayoutParams(rllp);
 		
@@ -84,7 +84,7 @@ public class CardInput {
 	
 	public void commit() {
 		client.currentside.text = textBox.getText().toString();
-		client.currentside.lines = getLines(client.currentside.text, (int) context.mview.editspace[2] - 80, textBox.getPaint());
+		client.currentside.lines = getLines(client.currentside.text, (int) (context.mview.editspace[2] - textBox.getPaddingLeft()*2), textBox.getPaint());
 	}
 	
 	public void revert() {		//TODO: Fix state preservation on rotation
