@@ -1,9 +1,39 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical">
-    <TextView
-		android:text="hello world"
-		android:layout_width="wrap_content" 
-		android:layout_height="wrap_content" />
-</LinearLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory
+		android:title="@string/behaviorCategory"
+		android:key="pref_behavior">
+		<CheckBoxPreference
+			android:key="pref_inertia"
+			android:title="@string/inertiaPref"
+			android:summary="@string/inertiaPrefSummary"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="pref_snapback"
+			android:title="@string/snapbackPref"
+			android:summary="@string/snapbackPrefSummary"
+			android:defaultValue="true"
+			android:dependency="pref_inertia" />
+		<ListPreference
+			android:key="pref_singleTouchAction"
+			android:title="@string/singleTouchAction"
+			android:dialogTitle="@string/singleTouchAction"
+			android:entries="@array/touchActions"
+			android:entryValues="@array/touchActionsVals"
+			android:defaultValue="@string/singleTouchDefault" />
+		<ListPreference
+			android:key="pref_doubleTouchAction"
+			android:title="@string/doubleTouchAction"
+			android:dialogTitle="@string/doubleTouchAction"
+			android:entries="@array/touchActions"
+			android:entryValues="@array/touchActionsVals"
+			android:defaultValue="@string/doubleTouchDefault" />
+		<ListPreference
+			android:key="pref_longTouchAction"
+			android:title="@string/longTouchAction"
+			android:dialogTitle="@string/longTouchAction"
+			android:entries="@array/touchActions"
+			android:entryValues="@array/touchActionsVals"
+			android:defaultValue="@string/longTouchDefault" />
+	</PreferenceCategory>
+</PreferenceScreen>
