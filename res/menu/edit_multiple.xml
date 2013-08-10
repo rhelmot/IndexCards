@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/menu_delete_multiple"
-		android:icon="@drawable/delete"
+		android:icon="@drawable/ic_menu_trash"
         android:showAsAction="always"
         android:title="Delete" />
 	<item android:id="@+id/menu_select_all"

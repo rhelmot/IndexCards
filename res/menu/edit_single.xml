@@ -1,14 +1,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/menu_cancel_edit"
-		android:icon="@drawable/notok"
+		android:icon="@drawable/ic_menu_undo"
         android:showAsAction="always"
         android:title="Cancel" />
 	<item android:id="@+id/menu_delete_single"
-		android:icon="@drawable/delete"
+		android:icon="@drawable/ic_menu_trash"
         android:showAsAction="always"
         android:title="Delete" />
 	<item android:id="@+id/menu_new_side"
-		android:icon="@drawable/notok"
         android:showAsAction="never"
         android:title="New Side" />
 </menu>
