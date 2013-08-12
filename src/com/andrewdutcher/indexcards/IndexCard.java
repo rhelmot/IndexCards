@@ -14,6 +14,7 @@ import android.os.Parcelable;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.ActionMode;
+import android.graphics.*;
 
 public class IndexCard {
 	public Rect cardDim;
@@ -38,6 +39,13 @@ public class IndexCard {
 	public boolean editing;
 	public AnimatedNums animdata;
 	public int animpurpose;
+	
+	private double velx = 0;
+	private double vely = 0;
+	private double velt = 0;
+	private double lastx;
+	private double lasty;
+	private double lastt;
 	
 	private Rect oCardDim;
 	private float oRotation;
@@ -122,6 +130,7 @@ public class IndexCard {
 	}
 	
 	public void draw(Canvas c) {
+		processInertia();
 		boolean singlePurpose = false;
 		if (animating) {
 			double[] data;
@@ -187,6 +196,7 @@ public class IndexCard {
 			touches[0] = id;
 			touchxref = e.getX(index);
 			touchyref = e.getY(index);
+			setRotPoint(touchxref, touchyref);
 			oCardDim = new Rect(cardDim);
 			timetouch = System.currentTimeMillis();
 			selected = true;
@@ -208,7 +218,6 @@ public class IndexCard {
 			touchyref = (e.getY(index) + e.getY(index0)) / 2;
 			oCardDim = new Rect(cardDim);
 			oRotation = rotation;
-			
 			setRotPoint(touchxref, touchyref);
 			oOffsetx = offsetx;
 			oOffsety = offsety;
@@ -232,11 +241,11 @@ public class IndexCard {
 			if (touches[2] == id) {
 				touches[2] = -1;
 			} else if (touches[1] == id) {
-				unsetRotPoint();
 				int index0 = e.findPointerIndex(touches[0]);
 				touches[1] = -1;
 				touchxref = e.getX(index0);
 				touchyref = e.getY(index0);
+				setRotPoint(touchxref, touchyref);
 				oCardDim = new Rect(cardDim);
 			} else if (touches[0] == id) {
 				if (touches[1] == -1) {
@@ -262,12 +271,12 @@ public class IndexCard {
 						}
 					}
 				} else {
-					unsetRotPoint();
 					int index0 = e.findPointerIndex(touches[1]);
 					touches[0] = touches[1];
 					touches[1] = -1;
 					touchxref = e.getX(index0);
 					touchyref = e.getY(index0);
+					setRotPoint(touchxref, touchyref);
 					oCardDim = new Rect(cardDim);
 				}
 			}
@@ -321,21 +330,23 @@ public class IndexCard {
 	}
 	
 	public void setRotPoint(float x, float y) {
+		if (offsetx != 0 || offsety != 0)
+			unsetRotPoint();
 		double x1 = (x-cardDim.left)/Math.cos(Math.toRadians(rotation));
-		double h1 = (x-cardDim.left)*Math.tan(Math.toRadians(rotation));
-		double h2 = (y-cardDim.top) - h1;
-		double x2 = h2*Math.sin(Math.toRadians(rotation));
+		double y1 = (x-cardDim.left)*Math.tan(Math.toRadians(rotation));
+		double y2 = (y-cardDim.top) - y1;
+		double x2 = y2*Math.sin(Math.toRadians(rotation));
 		offsetx = (float) (x1+x2);
-		offsety = (float) (h2*Math.cos(Math.toRadians(rotation)));
+		offsety = (float) (y2*Math.cos(Math.toRadians(rotation)));
 		cardDim.offsetTo((int)(x-offsetx),(int)(y-offsety));
 	}
 	
 	public void unsetRotPoint() {
-		double y2 = offsety/Math.cos(Math.toRadians(rotation));
-		double x2 = offsety*Math.tan(Math.toRadians(rotation));
-		double x1 = offsetx - x2;
-		double x = x1*Math.cos(Math.toRadians(rotation));
-		double y1 = x1*Math.sin(Math.toRadians(rotation));
+		double x1 = offsety*Math.tan(Math.toRadians(rotation));
+		double y1 = offsety/Math.cos(Math.toRadians(rotation));
+		double x2 = offsetx - x1;
+		double x = x2*Math.cos(Math.toRadians(rotation));
+		double y2 = x2*Math.sin(Math.toRadians(rotation));
 		double y = y1+y2;
 		cardDim.offsetTo((int)(cardDim.left+offsetx-x), (int)(cardDim.top+offsety-y));
 		cardDim.right = cardDim.left + (int) (oCardDim.width()*scalefactor);
@@ -343,6 +354,90 @@ public class IndexCard {
 		offsetx = 0;
 		offsety = 0;
 		scalefactor = 1;
+	}
+	
+	public Point cs2as (Point cs) {
+		float sangle = getangle(offsetx, offsety, cs.x, cs.y) + rotation;
+		float sdist = getdist(offsetx, offsety, cs.x, cs.y);
+		Point as = new Point(cardDim.left + (int) offsetx, cardDim.top + (int) offsety);
+		as.offset((int) (sdist*Math.cos(Math.toRadians(sangle))), (int) (sdist*Math.sin(Math.toRadians(sangle))));
+		return as;
+	}
+	
+	private double applyFriction(double vel, float coefficient) {
+		double fr = -coefficient * Math.atan(vel/(coefficient*3));
+		if (Math.abs(fr) > Math.abs(vel))
+			return -vel;
+		else
+			return fr;
+	}
+	
+	private double applyFriction(double vel) {
+		return applyFriction(vel, 0.5f);
+	}
+	
+	public Point getCenter() {
+		return cs2as(new Point(cardDim.width()/2, cardDim.height()/2));
+	}
+	
+	private boolean isOffscreen(Point check) {
+		return check.x < 0 || check.x > parent.getWidth() || check.y < 0 || check.y > parent.getHeight();
+	}
+	
+	private boolean isOffscreen() {
+		return isOffscreen(getCenter());
+	}
+	
+	private void processInertia() {
+		Point ccenter = getCenter();
+		//String[] dk = {((Integer) ccenter.x).toString()};
+		//sides.get(0).lines = dk;
+		if (touches[0] == -1) {
+			if ((velx != 0 && vely != 0) || isOffscreen(ccenter)) { 
+				cardDim.offset((int) velx, (int) vely);
+				parent.invalidate();
+				
+				if (ccenter.x < 0) {
+					double px = -((float)ccenter.x)/5f;
+					velx = Math.min(px + velx, (-(float)(ccenter.x))/10f + 1);
+				} else if (ccenter.x > parent.getWidth()) {
+					double px = ((float)(parent.getWidth() - ccenter.x))/5f;
+					velx = Math.max(px + velx, ((float)(parent.getWidth() - ccenter.x))/10f - 1);
+				} else {
+					velx += applyFriction(velx);
+				}
+				
+				if (ccenter.y < 0) {
+					double py = -((float)ccenter.y)/5f;
+					vely = Math.min(py + vely, (-(float)(ccenter.y))/10f + 1);
+				} else if (ccenter.y > parent.getHeight()) {
+					double py = ((float)(parent.getHeight() - ccenter.y))/5f;
+					vely = Math.max(py + vely, ((float)(parent.getHeight() - ccenter.y))/10f - 1);
+				} else {
+					vely += applyFriction(vely);
+				}
+			}
+		} else {
+			velx = cardDim.left - lastx;
+			vely = cardDim.top - lasty;
+			lastx = cardDim.left;
+			lasty = cardDim.top;
+		}
+		if (touches[1] == -1) {
+			if (velt != 0) {
+				rotation += velt;
+				parent.invalidate();
+				if (velt > 0.3)
+					velt -= 0.3;
+				else if (velt < -0.3)
+					velt += 0.3;
+				else
+					velt = 0;
+			}
+		} else {
+			velt = rotation - lastt;
+			lastt = rotation;
+		}
 	}
 	
 	public void setRotOffset(float x, float y) {

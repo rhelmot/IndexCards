@@ -3,10 +3,10 @@
 	<string name="behaviorCategory">Behavior</string>
 	
 	<string name="inertiaPref">Card Inertia</string>
-	<string name="inertiaPrefSummary">Cards will slide when flicked</string>
+	<string name="inertiaPrefSummary">Cards will slide when released in motion</string>
 	
 	<string name="snapbackPref">Soft Edges</string>
-	<string name="snapbackPrefSummary">Cards will gently slide back when flicked beyond screen bounds</string>
+	<string name="snapbackPrefSummary">Cards will gently slide back when slid beyond screen bounds</string>
 	
 	<string-array name="touchActions">
 		<item>None</item>
